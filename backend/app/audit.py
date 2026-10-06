@@ -1,139 +1,189 @@
+"""
+MissionMind Audit Trail
+=======================
+Tamper-evident audit chain using hash chaining.
+
+Implements:
+  - Session-based audit event recording
+  - SHA-256 hash chaining (genesis → hash_01 → hash_02 → ...)
+  - Chain verification
+  - Answer replay support
+"""
+
+from __future__ import annotations
+
 import hashlib
 import json
-import time
-from typing import List, Dict, Any, Tuple
-from app.db import get_db_connection
-from app.schemas import AuditItem, AuditVerifyResponse
+import logging
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Optional
 
-GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
+from app import db
+from app.config import AUDIT_HASH_ALGORITHM
+from app.schemas import AuditEvent, AuditVerifyResponse
 
-def calculate_audit_hash(prev_hash: str, audit_id: str, query: str, timestamp: str, record_ids: List[str]) -> str:
-    payload = f"{prev_hash}|{audit_id}|{query}|{timestamp}|{','.join(sorted(record_ids))}"
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+logger = logging.getLogger("missionmind.audit")
 
-def record_audit_entry(
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Hash Computation
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _compute_hash(data: str, previous_hash: Optional[str] = None) -> str:
+    """
+    Compute a SHA-256 hash of the data chained with the previous hash.
+    """
+    content = f"{previous_hash or 'GENESIS'}:{data}"
+    return hashlib.new(AUDIT_HASH_ALGORITHM, content.encode("utf-8")).hexdigest()
+
+
+def _event_to_hash_content(event: dict[str, Any]) -> str:
+    """
+    Create a deterministic string representation of an audit event
+    for hashing purposes.
+    """
+    parts = [
+        event.get("timestamp", ""),
+        event.get("event_type", ""),
+        event.get("session_id", ""),
+        event.get("query", ""),
+        json.dumps(event.get("record_ids", []), sort_keys=True),
+        str(event.get("retrieval_strength", "")),
+        str(event.get("dropped_claims", 0)),
+    ]
+    return "|".join(parts)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Audit Event Recording
+# ═══════════════════════════════════════════════════════════════════════════
+
+def record_audit_event(
+    event_type: str,
     session_id: str,
-    query: str,
-    retrieved_record_ids: List[str],
-    retrieval_strength: float,
-    raw_model_output: Dict[str, Any],
-    validated_output: Dict[str, Any],
-    dropped_claims_count: int
-) -> AuditItem:
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    query: Optional[str] = None,
+    record_ids: Optional[list[str]] = None,
+    retrieval_strength: Optional[float] = None,
+    raw_output: Optional[str] = None,
+    validated_output: Optional[str] = None,
+    dropped_claims: int = 0,
+) -> AuditEvent:
+    """
+    Record a new audit event and chain it to the previous entry.
+    """
+    # Get the last audit event for chain linking
+    all_events = db.get_all_audit_events_ordered()
+    previous_hash = all_events[-1]["current_hash"] if all_events else None
 
-    # Get latest entry to get previous hash
-    cursor.execute("SELECT hash FROM audit_logs ORDER BY rowid DESC LIMIT 1")
-    last_row = cursor.fetchone()
-    prev_hash = last_row["hash"] if last_row else GENESIS_HASH
+    # Build event data
+    event_id = f"AUD-{uuid.uuid4().hex[:8].upper()}"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
-    audit_id = f"AUD-{int(time.time() * 1000)}"
-    ts_now = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+    event_data = {
+        "id": event_id,
+        "timestamp": timestamp,
+        "event_type": event_type,
+        "session_id": session_id,
+        "query": query,
+        "record_ids": record_ids or [],
+        "retrieval_strength": retrieval_strength,
+        "raw_output": raw_output,
+        "validated_output": validated_output,
+        "dropped_claims": dropped_claims,
+        "previous_hash": previous_hash,
+    }
 
-    entry_hash = calculate_audit_hash(prev_hash, audit_id, query, ts_now, retrieved_record_ids)
+    # Compute chained hash
+    hash_content = _event_to_hash_content(event_data)
+    current_hash = _compute_hash(hash_content, previous_hash)
+    event_data["current_hash"] = current_hash
 
-    cursor.execute(
-        "INSERT INTO audit_logs (id, session_id, timestamp, query, retrieved_record_ids, retrieval_strength, raw_model_output, validated_output, dropped_claims_count, previous_hash, hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (
-            audit_id, session_id, ts_now, query,
-            json.dumps(retrieved_record_ids), retrieval_strength,
-            json.dumps(raw_model_output), json.dumps(validated_output),
-            dropped_claims_count, prev_hash, entry_hash
-        )
+    # Store in database
+    db.insert_audit_event(event_data)
+
+    logger.info(
+        "Audit event %s recorded (type=%s, session=%s, hash=%s...)",
+        event_id,
+        event_type,
+        session_id,
+        current_hash[:12],
     )
-    conn.commit()
-    conn.close()
 
-    return AuditItem(
-        id=audit_id,
-        session_id=session_id,
-        timestamp=ts_now,
-        query=query,
-        retrieved_record_ids=retrieved_record_ids,
-        retrieval_strength=retrieval_strength,
-        raw_model_output=raw_model_output,
-        validated_output=validated_output,
-        dropped_claims_count=dropped_claims_count,
-        previous_hash=prev_hash,
-        hash=entry_hash
-    )
+    return AuditEvent(**event_data)
 
-def get_audit_trail() -> List[AuditItem]:
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM audit_logs ORDER BY rowid DESC")
-    rows = cursor.fetchall()
-    
-    entries = []
-    for r in rows:
-        entries.append(AuditItem(
-            id=r["id"],
-            session_id=r["session_id"],
-            timestamp=r["timestamp"],
-            query=r["query"],
-            retrieved_record_ids=json.loads(r["retrieved_record_ids"]),
-            retrieval_strength=r["retrieval_strength"],
-            raw_model_output=json.loads(r["raw_model_output"]),
-            validated_output=json.loads(r["validated_output"]),
-            dropped_claims_count=r["dropped_claims_count"],
-            previous_hash=r["previous_hash"],
-            hash=r["hash"]
-        ))
-    conn.close()
-    return entries
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Chain Verification
+# ═══════════════════════════════════════════════════════════════════════════
 
 def verify_audit_chain() -> AuditVerifyResponse:
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM audit_logs ORDER BY rowid ASC")
-    rows = cursor.fetchall()
+    """
+    Verify the integrity of the entire audit chain.
 
-    if not rows:
-        conn.close()
-        return AuditVerifyResponse(
-            ok=True,
-            entries_checked=0,
-            chain_valid=True,
-            message="Audit log chain is empty. Initialized with genesis hash.",
-            latest_hash=GENESIS_HASH
-        )
+    Each event's hash must match the recomputed hash based on
+    its content and the previous event's hash.
+    """
+    events = db.get_all_audit_events_ordered()
 
-    expected_prev = GENESIS_HASH
-    entries_checked = 0
+    if not events:
+        return AuditVerifyResponse(ok=True, entries_checked=0)
 
-    for r in rows:
-        rec_ids = json.loads(r["retrieved_record_ids"])
-        expected_hash = calculate_audit_hash(r["previous_hash"], r["id"], r["query"], r["timestamp"], rec_ids)
-        
-        if r["previous_hash"] != expected_prev:
-            conn.close()
+    previous_hash: Optional[str] = None
+
+    for i, event in enumerate(events):
+        # Verify previous_hash link
+        expected_prev = previous_hash
+        actual_prev = event.get("previous_hash")
+
+        if i == 0:
+            # Genesis event should have no previous hash
+            if actual_prev is not None:
+                return AuditVerifyResponse(
+                    ok=False,
+                    entries_checked=i + 1,
+                    broken_at=event["id"],
+                )
+        else:
+            if actual_prev != expected_prev:
+                return AuditVerifyResponse(
+                    ok=False,
+                    entries_checked=i + 1,
+                    broken_at=event["id"],
+                )
+
+        # Recompute hash and verify
+        hash_content = _event_to_hash_content(event)
+        expected_hash = _compute_hash(hash_content, actual_prev)
+        actual_hash = event.get("current_hash", "")
+
+        if expected_hash != actual_hash:
             return AuditVerifyResponse(
                 ok=False,
-                entries_checked=entries_checked,
-                chain_valid=False,
-                message=f"Tamper detected! Previous hash mismatch at entry {r['id']}.",
-                latest_hash=r["hash"]
-            )
-            
-        if r["hash"] != expected_hash:
-            conn.close()
-            return AuditVerifyResponse(
-                ok=False,
-                entries_checked=entries_checked,
-                chain_valid=False,
-                message=f"Tamper detected! Entry {r['id']} hash corruption.",
-                latest_hash=r["hash"]
+                entries_checked=i + 1,
+                broken_at=event["id"],
             )
 
-        expected_prev = r["hash"]
-        entries_checked += 1
+        previous_hash = actual_hash
 
-    conn.close()
-    return AuditVerifyResponse(
-        ok=True,
-        entries_checked=entries_checked,
-        chain_valid=True,
-        message=f"Tamper-evident hash chain valid. {entries_checked} entries verified.",
-        latest_hash=expected_prev
-    )
+    return AuditVerifyResponse(ok=True, entries_checked=len(events))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Audit Retrieval
+# ═══════════════════════════════════════════════════════════════════════════
+
+def get_audit_trail(
+    session_id: Optional[str] = None, limit: int = 100
+) -> list[dict[str, Any]]:
+    """Retrieve audit events, optionally filtered by session."""
+    return db.get_audit_events(session_id=session_id, limit=limit)
+
+
+def get_audit_event_for_replay(event_id: str) -> Optional[dict[str, Any]]:
+    """Get a single audit event for answer replay."""
+    events = db.get_audit_events()
+    for event in events:
+        if event["id"] == event_id:
+            return event
+    return None
