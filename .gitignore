@@ -8,3 +8,8 @@ htmlcov/
 *.db-journal
 .env
 .DS_Store
+node_modules/
+dist/
+.vite/
+backend/venv/
+*.egg-info/
