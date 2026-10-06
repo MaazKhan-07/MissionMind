@@ -1,10 +1,22 @@
-__pycache__/
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/venv/
+backend/__pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Build & Cache
+dist/
+build/
+.vite/
 .pytest_cache/
 .coverage
 htmlcov/
 *.db-journal
+
+# Environment & Secrets
 .env
+.env.local
 .DS_Store
