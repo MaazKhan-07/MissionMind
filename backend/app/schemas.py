@@ -92,3 +92,9 @@ class IngestResponse(BaseModel):
     records_ingested: int = 0
     telemetry_ingested: int = 0
     embeddings_generated: int = 0
+
+# Compatibility Aliases
+MissionMindAnswer = CopilotAnswer
+Confidence = Union[float, str]
+TimelineEvent = TimelineItem
+
