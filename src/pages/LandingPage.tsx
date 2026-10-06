@@ -23,7 +23,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onReplayIntro
 }) => {
   return (
-    <div className="relative min-h-screen bg-void text-slate-100 flex flex-col justify-between overflow-hidden select-none">
+    <div className="relative min-h-screen bg-transparent text-slate-100 flex flex-col justify-between overflow-hidden select-none">
       {/* Background Interactive 3D Mesh Layer */}
       <div className="absolute inset-0 z-0">
         <InteractiveMesh className="w-full h-full opacity-80" />
