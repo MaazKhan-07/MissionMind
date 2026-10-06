@@ -10,6 +10,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three', '@react-three/fiber', '@react-three/drei'],
+          lucide: ['lucide-react'],
+          vendor: ['react', 'react-dom']
+        }
+      }
+    }
+  },
   server: {
     port: 3000,
     open: false,
