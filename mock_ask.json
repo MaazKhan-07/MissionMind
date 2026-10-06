@@ -1,133 +1,159 @@
 {
+  "_comment": "MissionMind mock /api/ask response — for frontend development before AI pipeline is live",
   "answer": {
     "abstain": false,
     "abstain_reason": null,
     "missing_data": [],
     "facts": [
       {
-        "claim": "Battery bus voltage dropped to 23.8 V at 14:31:42 UTC, below nominal 24.5 V minimum threshold.",
-        "citation": "T-19281",
-        "verifiable": true
+        "statement": "Battery bus voltage was 23.8 V at 14:31:42 UTC, below the configured lower limit of 24.5 V.",
+        "citations": ["T-19281"]
       },
       {
-        "claim": "Communications transmitter RF power output decreased by 4.2 dBm following EPS bus voltage drop.",
-        "citation": "T-19282",
-        "verifiable": true
+        "statement": "Communication signal strength dropped to -98.4 dBm at 14:32:18 UTC, exceeding the -95 dBm threshold.",
+        "citations": ["T-19282"]
+      },
+      {
+        "statement": "EPS current draw increased to 4.7 A at 14:30:04 UTC, above the normal 2.5–4.0 A range.",
+        "citations": ["T-19284"]
+      },
+      {
+        "statement": "Ground station detected communication anomaly at 14:33:01 UTC with bit error rate of 1.2e-4, exceeding the 1e-5 limit.",
+        "citations": ["T-19285"]
+      },
+      {
+        "statement": "Battery bus voltage was nominal at 26.4 V at 14:28:02 UTC, before the anomaly sequence began.",
+        "citations": ["T-19286"]
       }
     ],
     "inferences": [
       {
-        "claim": "Power instability in EPS main bus is the primary driver of communication signal degradation.",
+        "statement": "Power instability is a likely contributor to the communication degradation. The battery voltage drop preceded the signal strength decrease by approximately 36 seconds, consistent with a power-to-communications causal chain.",
+        "confidence": "high",
+        "reasoning": "Two independent telemetry observations (voltage drop T-19281, signal decrease T-19282) show a consistent temporal sequence, and historical incident INC-047 documents a similar EPS-to-COMMS degradation pattern.",
         "citations": ["T-19281", "T-19282", "INC-047"]
+      },
+      {
+        "statement": "Increased EPS current draw may have contributed to the voltage drop by exceeding the battery discharge capacity.",
+        "confidence": "medium",
+        "reasoning": "Current draw of 4.7 A (T-19284) exceeded normal range and preceded the voltage drop. However, the specific causal mechanism is not confirmed by the available records.",
+        "citations": ["T-19284", "T-19281"]
       }
     ],
     "recommendations": [
       {
-        "action": "Execute COMMS-04 procedure Step 1: Verify battery bus voltage and switch high-power payloads to standby.",
+        "order": 1,
+        "action": "Check battery bus voltage on EPS telemetry display. Verify voltage is within 24.5–29.0 V range.",
+        "rationale": "COMMS-04 Step 01 specifies battery voltage check as the first diagnostic action for communication degradation.",
         "procedure_id": "COMMS-04",
-        "citations": ["COMMS-04", "T-19281"]
+        "citations": ["COMMS-04"]
+      },
+      {
+        "order": 2,
+        "action": "Verify communication subsystem current draw against nominal 2.1 A baseline.",
+        "rationale": "COMMS-04 Step 02 specifies current draw verification to isolate the degradation source.",
+        "procedure_id": "COMMS-04",
+        "citations": ["COMMS-04"]
+      },
+      {
+        "order": 3,
+        "action": "Compare current anomaly pattern with previous incident INC-047.",
+        "rationale": "COMMS-04 Step 03 specifies comparison with historical incidents. INC-047 shows a similar power-to-communications degradation pattern.",
+        "procedure_id": "COMMS-04",
+        "citations": ["COMMS-04", "INC-047"]
+      }
+    ],
+    "similar_incidents": [
+      {
+        "incident_id": "INC-047",
+        "similarity": 0.92,
+        "reason": "Same EPS/COMMS subsystem relationship. Similar battery voltage drop pattern. Similar signal degradation sequence. Similar temporal ordering (EPS event preceding COMMS degradation)."
       }
     ]
   },
   "records": {
     "T-19281": {
       "id": "T-19281",
-      "type": "Telemetry",
-      "timestamp": "2026-03-14 14:31:42 UTC",
+      "timestamp": "2026-03-14T14:31:42",
       "subsystem": "EPS",
-      "parameter": "battery_bus_voltage",
-      "value": "23.8 V",
-      "limit": "24.5 – 29.0 V",
-      "status": "LOW",
-      "content": "EPS Battery Bus Voltage measured 23.8V (Warning threshold 24.5V)."
+      "record_type": "telemetry",
+      "severity": "warning",
+      "text": "Battery bus voltage dropped below lower limit. battery_bus_voltage = 23.8 V. Configured limits: 24.5 – 29.0 V. Status: LOW.",
+      "parameters": {"battery_bus_voltage": "23.8 V", "limit_low": 24.5, "limit_high": 29.0, "status": "LOW"}
     },
     "T-19282": {
       "id": "T-19282",
-      "type": "Telemetry",
-      "timestamp": "2026-03-14 14:32:18 UTC",
+      "timestamp": "2026-03-14T14:32:18",
       "subsystem": "COMMS",
-      "parameter": "signal_strength_dbm",
-      "value": "-102.4 dBm",
-      "limit": "-90.0 dBm",
-      "status": "DEGRADED",
-      "content": "S-Band Transceiver signal level dropped to -102.4 dBm due to bus power throttle."
+      "record_type": "telemetry",
+      "severity": "warning",
+      "text": "Communication signal strength decreased. Downlink signal: -98.4 dBm (threshold: -95 dBm).",
+      "parameters": {"signal_strength": "-98.4 dBm", "signal_threshold": "-95 dBm"}
+    },
+    "T-19284": {
+      "id": "T-19284",
+      "timestamp": "2026-03-14T14:30:04",
+      "subsystem": "EPS",
+      "record_type": "telemetry",
+      "severity": "info",
+      "text": "EPS current draw increasing on bus A. Current: 4.7 A. Normal operating range: 2.5–4.0 A.",
+      "parameters": {"current": "4.7 A", "normal_low": 2.5, "normal_high": 4.0}
+    },
+    "T-19285": {
+      "id": "T-19285",
+      "timestamp": "2026-03-14T14:33:01",
+      "subsystem": "COMMS",
+      "record_type": "telemetry",
+      "severity": "critical",
+      "text": "Ground station flagged communication anomaly. Bit error rate exceeded threshold.",
+      "parameters": {"bit_error_rate": "1.2e-4", "ber_limit": "1e-5"}
+    },
+    "T-19286": {
+      "id": "T-19286",
+      "timestamp": "2026-03-14T14:28:02",
+      "subsystem": "EPS",
+      "record_type": "telemetry",
+      "severity": "info",
+      "text": "Battery bus voltage nominal. battery_bus_voltage = 26.4 V.",
+      "parameters": {"battery_bus_voltage": "26.4 V", "status": "NOMINAL"}
     },
     "INC-047": {
       "id": "INC-047",
-      "type": "Incident",
-      "timestamp": "2025-11-04 09:12:00 UTC",
-      "subsystem": "EPS / COMMS",
-      "parameter": "bus_voltage_drop",
-      "value": "23.6 V",
-      "limit": "24.5 V",
-      "status": "RESOLVED",
-      "content": "Historical incident: EPS voltage drop caused automatic comms transmitter power backoff. Resolved by executing COMMS-04 payload load shedding."
+      "timestamp": "2025-11-22T09:15:00",
+      "subsystem": "EPS",
+      "record_type": "incident",
+      "severity": "warning",
+      "text": "Previous incident: power-to-communications degradation. Battery voltage dropped to 24.1 V during eclipse period.",
+      "parameters": {"battery_voltage_low": "24.1 V", "pattern": "EPS → COMMS degradation"}
     },
     "COMMS-04": {
       "id": "COMMS-04",
-      "type": "Procedure",
-      "timestamp": "2025-01-15 00:00:00 UTC",
+      "timestamp": "2024-01-15T00:00:00",
       "subsystem": "COMMS",
-      "parameter": "operational_procedure",
-      "value": "REV-3",
-      "limit": "N/A",
-      "status": "APPROVED",
-      "content": "COMMS-04: Communications Degradation Procedure. Step 1: Check battery bus voltage. Step 2: Verify comms current draw. Step 3: Shed secondary thermal heaters."
+      "record_type": "procedure",
+      "severity": "info",
+      "text": "PROCEDURE: Communications Degradation Response.",
+      "parameters": {"procedure_type": "response", "steps": 6}
     }
   },
+  "evidence_score": {
+    "retrieval_strength": 0.91,
+    "citation_count": 7,
+    "valid_citation_count": 7,
+    "dropped_claims": 0,
+    "matching_incidents": 1,
+    "matching_procedures": 1,
+    "confidence": "high"
+  },
   "dropped": 0,
-  "dropped_claims": [],
-  "retrieval_strength": 0.94,
+  "retrieval_strength": 0.91,
   "timeline": [
-    {
-      "timestamp": "14:28:02",
-      "event": "Battery Bus Voltage Nominal (27.4 V)",
-      "subsystem": "EPS",
-      "source_id": "T-19280"
-    },
-    {
-      "timestamp": "14:29:17",
-      "event": "Solar Array Temperature rising rapidly (+14°C)",
-      "subsystem": "THERMAL",
-      "source_id": "T-19279"
-    },
-    {
-      "timestamp": "14:30:04",
-      "event": "EPS Current draw increased to 18.2A",
-      "subsystem": "EPS",
-      "source_id": "T-19280B"
-    },
-    {
-      "timestamp": "14:31:42",
-      "event": "Battery Bus Voltage drop to 23.8 V (UNDERVOLTAGE ALERT)",
-      "subsystem": "EPS",
-      "source_id": "T-19281"
-    },
-    {
-      "timestamp": "14:32:18",
-      "event": "Comms signal strength drops to -102.4 dBm",
-      "subsystem": "COMMS",
-      "source_id": "T-19282"
-    },
-    {
-      "timestamp": "14:33:01",
-      "event": "Ground Station flags ANOM-001 Communication Degradation",
-      "subsystem": "GROUND",
-      "source_id": "LOG-1002"
-    }
+    {"timestamp": "2026-03-14T14:28:02", "record_id": "T-19286", "subsystem": "EPS", "event_type": "telemetry", "description": "Battery bus voltage nominal at 26.4 V", "severity": "info"},
+    {"timestamp": "2026-03-14T14:29:17", "record_id": "T-19283", "subsystem": "THERMAL", "event_type": "telemetry", "description": "EPS battery temperature above nominal range: 22.7°C", "severity": "info"},
+    {"timestamp": "2026-03-14T14:30:04", "record_id": "T-19284", "subsystem": "EPS", "event_type": "telemetry", "description": "EPS current draw increasing: 4.7 A", "severity": "info"},
+    {"timestamp": "2026-03-14T14:31:42", "record_id": "T-19281", "subsystem": "EPS", "event_type": "telemetry", "description": "Battery bus voltage LOW: 23.8 V", "severity": "warning"},
+    {"timestamp": "2026-03-14T14:32:18", "record_id": "T-19282", "subsystem": "COMMS", "event_type": "telemetry", "description": "Communication signal strength decreased: -98.4 dBm", "severity": "warning"},
+    {"timestamp": "2026-03-14T14:33:01", "record_id": "T-19285", "subsystem": "COMMS", "event_type": "telemetry", "description": "Ground station flagged communication anomaly", "severity": "critical"}
   ],
-  "injection_detected": false,
-  "injection_details": null,
-  "similar_incidents": [
-    {
-      "id": "INC-047",
-      "title": "Power Bus Voltage Dip causing Transceiver RF Power Drop",
-      "similarity": 0.92,
-      "reasons": [
-        "Identical EPS bus undervoltage trigger condition",
-        "Matching S-band signal power loss signature",
-        "Same temporal sequence of EPS drop followed by Comms alarm"
-      ]
-    }
-  ]
+  "injection_flags": []
 }
