@@ -8,15 +8,34 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Void Black & Deep Orbital Slate
+        void: '#0B0F19',
+        'deep-slate': '#111827',
+        starlight: '#F8FAFC',
+        lunar: '#94A3B8',
+        'electric-cyan': '#06B6D4',
+        'nebula-violet': '#8B5CF6',
+
         space: {
-          950: '#040711',
-          900: '#070A11',
-          850: '#0B0F19',
-          800: '#0F172A',
-          750: '#151D33',
-          700: '#1E293B',
-          600: '#334155',
-          500: '#475569',
+          950: '#0B0F19', // Void Black
+          900: '#111827', // Deep Orbital Slate
+          850: '#161F30',
+          800: '#1F2937',
+          750: '#283548',
+          700: '#334155',
+          600: '#475569',
+          500: '#64748B',
+        },
+        light: {
+          bg: '#F4F7FA',
+          surface: '#FFFFFF',
+          elevated: '#F8FAFC',
+          border: '#D9E2EC',
+          text: '#0F172A',
+          secondary: '#475569',
+          brand: '#7C3AED',
+          cyan: '#0284C7',
+          warning: '#D97706',
         },
         // Strict Semantic Colors
         fact: {
@@ -27,18 +46,18 @@ export default {
           border: 'rgba(16, 185, 129, 0.3)',
         },
         inference: {
-          DEFAULT: '#F59E0B', // AMBER = INFERENCE
-          light: '#FBBF24',
-          dark: '#D97706',
-          bg: 'rgba(245, 158, 11, 0.08)',
-          border: 'rgba(245, 158, 11, 0.3)',
+          DEFAULT: '#8B5CF6', // NEBULA VIOLET = INFERENCE / AI
+          light: '#A78BFA',
+          dark: '#7C3AED',
+          bg: 'rgba(139, 92, 246, 0.08)',
+          border: 'rgba(139, 92, 246, 0.3)',
         },
         recommendation: {
-          DEFAULT: '#3B82F6', // BLUE = RECOMMENDATION
-          light: '#60A5FA',
-          dark: '#2563EB',
-          bg: 'rgba(59, 130, 246, 0.08)',
-          border: 'rgba(59, 130, 246, 0.3)',
+          DEFAULT: '#06B6D4', // CYAN = RECOMMENDATION
+          light: '#38BDF8',
+          dark: '#0891B2',
+          bg: 'rgba(6, 182, 212, 0.08)',
+          border: 'rgba(6, 182, 212, 0.3)',
         },
         critical: {
           DEFAULT: '#EF4444', // RED = CRITICAL / FAILURE
@@ -64,14 +83,15 @@ export default {
       boxShadow: {
         'cyan-glow': '0 0 20px rgba(6, 182, 212, 0.25)',
         'cyan-glow-lg': '0 0 35px rgba(0, 240, 255, 0.35)',
+        'violet-glow': '0 0 20px rgba(139, 92, 246, 0.25)',
         'green-glow': '0 0 20px rgba(16, 185, 129, 0.25)',
         'amber-glow': '0 0 20px rgba(245, 158, 11, 0.25)',
         'red-glow': '0 0 25px rgba(239, 68, 68, 0.35)',
         'card-glow': '0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 10px 0 rgba(6, 182, 212, 0.05)',
       },
       backgroundImage: {
-        'grid-pattern': "radial-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px)",
-        'radar-grid': "linear-gradient(to right, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(56, 189, 248, 0.04) 20px)",
+        'grid-pattern': "radial-gradient(rgba(6, 182, 212, 0.12) 1px, transparent 1px)",
+        'radar-grid': "linear-gradient(to right, rgba(17, 24, 39, 0.8), rgba(17, 24, 39, 0.8)), repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(6, 182, 212, 0.04) 20px)",
       },
       animation: {
         'pulse-subtle': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
