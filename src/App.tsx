@@ -46,6 +46,8 @@ import {
   MOCK_AUDIT_ENTRIES
 } from './data/mockData';
 
+import { CustomCursor } from './components/common/CustomCursor';
+
 export const App: React.FC = () => {
   const { user, openAuthModal } = useAuth();
   const { showToast } = useToast();
@@ -261,7 +263,9 @@ export const App: React.FC = () => {
   const isLandingView = currentPath === '/landing';
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 flex flex-col font-sans transition-colors duration-200 relative">
+    <div className="min-h-screen bg-[#0B0C10] text-[#C5C6C7] flex flex-col font-sans transition-colors duration-200 relative select-none">
+      {/* Global Interactive Dust Cluster & Hover Ring Custom Cursor */}
+      <CustomCursor />
       {/* 0. Persistent Global Background Video (Runs continuously behind the entire app across all routes) */}
       <GlobalVideoBackground />
 
@@ -313,6 +317,7 @@ export const App: React.FC = () => {
               onToggleMobileMenu={() => setMobileMenuOpen(true)}
               onOpenProfile={() => setProfileModalOpen(true)}
               isLiveMode={isLiveMode}
+              onNavigate={(path) => setCurrentPath(path)}
             />
 
             {/* Dynamic View Container */}

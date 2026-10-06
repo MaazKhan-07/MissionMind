@@ -76,20 +76,20 @@ export const GlobalVideoBackground: React.FC = () => {
             setHasError(true);
           }}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-            isLoaded ? 'opacity-70' : 'opacity-0'
+            isLoaded ? 'opacity-80' : 'opacity-0'
           }`}
         />
       )}
 
-      {/* 3. Theme-Responsive Cinematic Readability Overlay */}
+      {/* 3. Theme-Responsive 80% Intensity Readability Overlay */}
       {effectiveTheme === 'dark' ? (
-        /* Dark Theme Void Black Overlay with subtle Cyan & Violet orbital glow */
+        /* Dark Theme Void Black Overlay tuned for 80% background visibility */
         <div
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 90% 70% at 50% 30%, rgba(11, 15, 25, 0.45) 0%, rgba(11, 15, 25, 0.78) 75%, rgba(11, 15, 25, 0.92) 100%),
-              linear-gradient(180deg, rgba(11, 15, 25, 0.55) 0%, rgba(17, 24, 39, 0.65) 50%, rgba(11, 15, 25, 0.85) 100%)
+              radial-gradient(ellipse 90% 70% at 50% 30%, rgba(11, 12, 16, 0.20) 0%, rgba(11, 12, 16, 0.40) 75%, rgba(11, 12, 16, 0.65) 100%),
+              linear-gradient(180deg, rgba(11, 12, 16, 0.25) 0%, rgba(31, 40, 51, 0.35) 50%, rgba(11, 12, 16, 0.55) 100%)
             `
           }}
         />
@@ -99,8 +99,8 @@ export const GlobalVideoBackground: React.FC = () => {
           className="absolute inset-0"
           style={{
             background: `
-              linear-gradient(180deg, rgba(244, 247, 250, 0.82) 0%, rgba(244, 247, 250, 0.88) 100%),
-              radial-gradient(ellipse at 50% 20%, rgba(255, 255, 255, 0.4) 0%, rgba(244, 247, 250, 0.85) 100%)
+              linear-gradient(180deg, rgba(244, 247, 250, 0.65) 0%, rgba(244, 247, 250, 0.75) 100%),
+              radial-gradient(ellipse at 50% 20%, rgba(255, 255, 255, 0.3) 0%, rgba(244, 247, 250, 0.70) 100%)
             `
           }}
         />

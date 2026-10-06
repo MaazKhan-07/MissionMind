@@ -147,7 +147,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           {!collapsed && (
-            <div className="flex items-center gap-2 overflow-hidden transition-all duration-200">
+            <div
+              onClick={() => {
+                onNavigate('/landing');
+                onCloseMobile();
+              }}
+              className="flex items-center gap-2 overflow-hidden transition-all duration-200 cursor-pointer hover:opacity-90"
+              title="Go to Home Page"
+            >
               <img
                 src="/logo.jpg"
                 alt="MissionMind"

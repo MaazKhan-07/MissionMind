@@ -118,14 +118,14 @@ export const SystemHealthPage: React.FC<SystemHealthPageProps> = ({ isLiveMode }
         <div className="bg-space-900 border border-slate-800 p-5 rounded-xl space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-mono text-xs font-bold text-slate-100">
-              <HardDrive className="w-4 h-4 text-purple-400" />
+              <HardDrive className="w-4 h-4 text-[#45A29E]" />
               <span>Audit Chain Storage</span>
             </div>
             <StatusIndicator status="SYNCED" label="VERIFIED" size="sm" />
           </div>
           <div className="text-xs font-mono text-slate-400 space-y-1 bg-space-950 p-3 rounded-lg border border-slate-800">
             <div className="flex justify-between"><span>HASH ALGORITHM:</span><span className="text-slate-200 font-bold">SHA-256</span></div>
-            <div className="flex justify-between"><span>TOTAL SESSIONS:</span><span className="text-purple-300 font-bold">3 Recorded</span></div>
+            <div className="flex justify-between"><span>TOTAL SESSIONS:</span><span className="text-[#66FCF1] font-bold">3 Recorded</span></div>
             <div className="flex justify-between"><span>CHAIN STATUS:</span><span className="text-emerald-400 font-bold">✓ VALID</span></div>
           </div>
         </div>
