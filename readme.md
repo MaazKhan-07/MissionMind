@@ -25,11 +25,17 @@ Unlike generic LLM chatbots that hallucinate plausible answers, MissionMind guar
 - 🛡️ **Evidence Guardrails**: Post-generation validation engine that intercepts and strips numerical hallucinations into a dedicated **Dropped Claims** audit log.
 - 🛑 **AI Abstention Protocol**: Refuses to guess when evidence is missing or ambiguous (*"No evidence → No claim"*).
 - 🔐 **Prompt Injection Shield**: Treats retrieved flight logs as raw data, neutralizing prompt injection attacks (`LOG-99999`).
+- 🎥 **Cinematic Intro Boot Sequence**: Native unmuted intro video playback (`/media/missionmind-intro.mp4`) with audio fallback gate and seamless 950ms landing transition.
+- 🌐 **Interactive 3D Spatial Topography**: Real-time React Three Fiber particle and wireframe topography that physically elevates outward toward cursor movement.
+- 🛸 **Floating Glassmorphism Navbar**: Floating aerospace glass bar with global navigation, search, and dynamic theme switching.
+- ☰ **Ultra-Minimal Collapsible Workstation Sidebar**: Three-line menu toggle (`☰`) with an icon-only collapsed state, pinned settings, and flight director profile.
+- 🌗 **Dual Aerospace Themes**: Tailored **Void Black** (`#0B0F19`) command station dark theme and **Daylight Aerospace** (`#F4F7FA`) daytime analytics light theme.
 - 🌌 **3D Mission Orbital Scene**: Real-time React Three Fiber / Three.js 3D satellite visualization with an interactive 2D Tactical SVG Radar fallback view.
 - 📈 **Telemetry Intelligence Console**: Recharts visualization with min/max operational limit threshold lines and highlighted anomaly window shading (`14:30 - 14:33`).
 - 🕐 **Deterministic Incident Timeline**: Chronological event sequence built strictly from timestamped telemetry logs.
 - 📜 **Historical Incident Library**: Vector similarity search matching current anomalies against historical flight incidents (`INC-047` - 92% match).
 - 🔗 **Tamper-Evident SHA-256 Audit Chain**: Hashes every investigation session (`MM-2026-001`) with previous block hashes for complete auditability.
+- ⚙️ **Operational Settings & Preferences**: Full workstation configuration console for appearance, AI model, notification chimes, ground station downlink, and keybindings.
 
 ---
 
