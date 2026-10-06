@@ -8,6 +8,12 @@ def test_intro_video_asset_exists():
     assert os.path.exists(video_path), "missionmind-intro.mp4 must exist in public/media"
     assert os.path.getsize(video_path) > 1000000, "missionmind-intro.mp4 must be a complete video asset"
 
+def test_background_video_asset_exists():
+    """Verify official MissionMind background video is mounted in public static directory."""
+    video_path = os.path.join(os.path.dirname(__file__), "..", "public", "media", "missionmind-background.mp4")
+    assert os.path.exists(video_path), "missionmind-background.mp4 must exist in public/media"
+    assert os.path.getsize(video_path) > 1000000, "missionmind-background.mp4 must be a complete video asset"
+
 def test_design_tokens_configured():
     """Verify CSS tokens for Void Black and Electric Cyan exist in index.css."""
     css_path = os.path.join(os.path.dirname(__file__), "..", "src", "index.css")
