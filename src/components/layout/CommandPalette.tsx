@@ -85,7 +85,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       id: 'incidents',
       label: 'Open Incident History',
       sublabel: 'Analyze similar historical incident INC-047 (92% match)',
-      icon: <History className="w-4 h-4 text-purple-400" />,
+      icon: <History className="w-4 h-4 text-[#45A29E]" />,
       action: () => onNavigate('/incidents')
     },
     {

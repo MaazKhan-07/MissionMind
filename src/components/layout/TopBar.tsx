@@ -23,13 +23,15 @@ interface TopBarProps {
   onToggleMobileMenu: () => void;
   onOpenProfile: () => void;
   isLiveMode: boolean;
+  onNavigate?: (path: string) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   onOpenCommandPalette,
   onToggleMobileMenu,
   onOpenProfile,
-  isLiveMode
+  isLiveMode,
+  onNavigate
 }) => {
   const { theme, effectiveTheme, setTheme } = useTheme();
   const { user } = useAuth();
@@ -85,7 +87,11 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2.5">
+        <div
+          onClick={() => onNavigate && onNavigate('/landing')}
+          className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity select-none"
+          title="Go to Home Page"
+        >
           <img
             src="/logo.jpg"
             alt="MissionMind Logo"
@@ -109,7 +115,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <div className="flex items-center gap-2 text-xs font-mono">
             <Search className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
-            <span>Ask MissionMind anything or search telemetry...</span>
+            <span>Search Bar</span>
           </div>
           <kbd className="hidden lg:inline-flex items-center gap-1 text-[10px] font-mono bg-space-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
             ⌘K
@@ -117,75 +123,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right: Clock & Controls */}
+      {/* Right: Controls */}
       <div className="flex items-center gap-3">
-        {/* Live UTC Clock */}
-        <div className="hidden lg:flex items-center gap-1.5 font-mono text-xs text-slate-300 bg-space-950/80 px-2.5 py-1 rounded border border-slate-800">
-          <Clock className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{utcTime || '14:32:18 UTC'}</span>
-        </div>
-
-        {/* Status Indicators Pill */}
-        <div className="hidden md:flex items-center gap-3 px-3 py-1 bg-space-950/80 rounded-lg border border-slate-800 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-slate-400 uppercase">STATUS</span>
-            <StatusIndicator status="DEGRADED" label="DEGRADED" size="sm" />
-          </div>
-          <div className="w-px h-3 bg-slate-800" />
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-slate-400 uppercase">DATA</span>
-            <StatusIndicator status="SYNCED" label="SYNCED" size="sm" />
-          </div>
-          <div className="w-px h-3 bg-slate-800" />
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-slate-400 uppercase">AI</span>
-            <StatusIndicator status="READY" label="READY" size="sm" />
-          </div>
-        </div>
-
-        {/* Theme Switcher Button */}
-        <div className="relative">
-          <button
-            onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-            className="p-2 rounded-lg bg-space-800 hover:bg-space-750 text-slate-300 hover:text-white transition-colors"
-            title="Toggle Theme"
-          >
-            {effectiveTheme === 'dark' ? (
-              <Moon className="w-4 h-4 text-cyan-400" />
-            ) : (
-              <Sun className="w-4 h-4 text-amber-500" />
-            )}
-          </button>
-
-          {themeDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-36 bg-space-900 border border-slate-700/80 rounded-xl shadow-2xl p-1 z-50 font-mono text-xs text-slate-300">
-              <button
-                onClick={() => { setTheme('dark'); setThemeDropdownOpen(false); }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
-                  theme === 'dark' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
-                }`}
-              >
-                <Moon className="w-3.5 h-3.5" /> Dark
-              </button>
-              <button
-                onClick={() => { setTheme('light'); setThemeDropdownOpen(false); }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
-                  theme === 'light' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
-                }`}
-              >
-                <Sun className="w-3.5 h-3.5" /> Light
-              </button>
-              <button
-                onClick={() => { setTheme('system'); setThemeDropdownOpen(false); }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
-                  theme === 'system' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
-                }`}
-              >
-                <Laptop className="w-3.5 h-3.5" /> System
-              </button>
-            </div>
-          )}
-        </div>
 
         {/* Notifications Dropdown Button */}
         <div className="relative">

@@ -91,49 +91,7 @@ export const FloatingNavbar: React.FC<FloatingNavbarProps> = ({
             <span className="hidden xl:inline text-[11px] font-mono text-slate-400">⌘K</span>
           </button>
 
-          {/* Theme Mode Toggle Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-              className="p-2 rounded-lg bg-space-800/60 hover:bg-space-800 border border-slate-700/60 text-slate-300 hover:text-white transition-all"
-              title="Change theme"
-            >
-              {effectiveTheme === 'dark' ? (
-                <Moon className="w-3.5 h-3.5 text-cyan-400" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-500" />
-              )}
-            </button>
 
-            {themeDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-36 bg-space-900 border border-slate-700/80 rounded-xl shadow-2xl p-1 z-50 font-mono text-xs text-slate-300">
-                <button
-                  onClick={() => { setTheme('dark'); setThemeDropdownOpen(false); }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
-                    theme === 'dark' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
-                  }`}
-                >
-                  <Moon className="w-3.5 h-3.5" /> Dark
-                </button>
-                <button
-                  onClick={() => { setTheme('light'); setThemeDropdownOpen(false); }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
-                    theme === 'light' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
-                  }`}
-                >
-                  <Sun className="w-3.5 h-3.5" /> Light
-                </button>
-                <button
-                  onClick={() => { setTheme('system'); setThemeDropdownOpen(false); }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
-                    theme === 'system' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
-                  }`}
-                >
-                  <Laptop className="w-3.5 h-3.5" /> System
-                </button>
-              </div>
-            )}
-          </div>
 
           {/* Profile / Auth Button */}
           {user ? (

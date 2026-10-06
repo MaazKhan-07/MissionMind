@@ -25,14 +25,14 @@ export const IncidentsPage: React.FC<IncidentsPageProps> = ({
     <div className="space-y-6 pb-12 select-none">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/30">
+          <div className="p-2.5 rounded-lg bg-[#66FCF1]/10 text-[#66FCF1] border border-[#66FCF1]/30">
             <History className="w-6 h-6" />
           </div>
           <div>
             <h1 className="font-tech text-2xl font-bold text-slate-100 uppercase tracking-wider">
               HISTORICAL INCIDENT LIBRARY
             </h1>
-            <span className="font-mono text-xs text-purple-400">
+            <span className="font-mono text-xs text-[#45A29E]">
               SIMILARITY MATCH ENGINE ({incidents.length} HISTORICAL RECORDS)
             </span>
           </div>

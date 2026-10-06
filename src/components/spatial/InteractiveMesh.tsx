@@ -119,20 +119,20 @@ const MeshSurface: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) =>
       {/* Dynamic Wireframe Grid Mesh */}
       <mesh ref={meshRef} geometry={geometry}>
         <meshBasicMaterial
-          color="#06B6D4"
+          color="#66FCF1"
           wireframe
           transparent
-          opacity={0.16}
+          opacity={0.35}
         />
       </mesh>
 
       {/* Nodes / Particle Points at vertices */}
       <points ref={pointsRef} geometry={geometry}>
         <pointsMaterial
-          color="#8B5CF6"
-          size={0.065}
+          color="#45A29E"
+          size={0.075}
           transparent
-          opacity={0.55}
+          opacity={0.80}
           sizeAttenuation
         />
       </points>

@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme, ThemeMode } from '../contexts/ThemeContext';
+import React, { useState } from 'react';
 import { useToast } from '../contexts/ToastContext';
 import {
   Settings,
-  Sun,
-  Moon,
-  Laptop,
   Bell,
   Sliders,
   Cpu,
@@ -19,15 +15,9 @@ import {
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
-  const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'ai' | 'mission' | 'shortcuts' | 'security' | 'about'>('appearance');
-
-  // Appearance state
-  const [reducedMotion, setReducedMotion] = useState<boolean>(() => {
-    return localStorage.getItem('missionmind_pref_reduced_motion') === 'true';
-  });
+  const [activeTab, setActiveTab] = useState<'notifications' | 'ai' | 'mission' | 'shortcuts' | 'security' | 'about'>('notifications');
 
   // Notification states
   const [notifyCritical, setNotifyCritical] = useState<boolean>(() => {
@@ -54,7 +44,6 @@ export const SettingsPage: React.FC = () => {
   });
 
   const handleSave = () => {
-    localStorage.setItem('missionmind_pref_reduced_motion', String(reducedMotion));
     localStorage.setItem('missionmind_notify_critical', String(notifyCritical));
     localStorage.setItem('missionmind_audio_alerts', String(audioAlerts));
     localStorage.setItem('missionmind_notify_dropped', String(notifyDropped));
@@ -66,7 +55,6 @@ export const SettingsPage: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'appearance', label: 'Appearance', icon: <Sun className="w-4 h-4" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
     { id: 'ai', label: 'AI Preferences', icon: <Cpu className="w-4 h-4" /> },
     { id: 'mission', label: 'Mission Preferences', icon: <Compass className="w-4 h-4" /> },
@@ -126,94 +114,7 @@ export const SettingsPage: React.FC = () => {
 
         {/* Right Settings Content */}
         <div className="md:col-span-8 lg:col-span-9 bg-space-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
-          {/* TAB 1: APPEARANCE */}
-          {activeTab === 'appearance' && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-tech text-base font-bold text-slate-100 uppercase">
-                  Interface Theme Mode
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Select your display theme. Void Black is tailored for mission command operations.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTheme('dark')}
-                  className={`p-4 rounded-xl border text-left font-mono text-xs transition-all flex flex-col justify-between h-24 ${
-                    theme === 'dark'
-                      ? 'bg-space-950 border-cyan-400 text-cyan-300 shadow-cyan-glow'
-                      : 'bg-space-950/60 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <Moon className="w-5 h-5 text-cyan-400" />
-                    {theme === 'dark' && <Check className="w-4 h-4 text-cyan-400" />}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-100">Void Black</div>
-                    <div className="text-[10px] text-slate-500">Dark (Command Station)</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTheme('light')}
-                  className={`p-4 rounded-xl border text-left font-mono text-xs transition-all flex flex-col justify-between h-24 ${
-                    theme === 'light'
-                      ? 'bg-slate-100 border-cyan-500 text-slate-900 shadow-lg'
-                      : 'bg-space-950/60 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <Sun className="w-5 h-5 text-amber-500" />
-                    {theme === 'light' && <Check className="w-4 h-4 text-cyan-500" />}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-800">Daylight Aerospace</div>
-                    <div className="text-[10px] text-slate-500">Light (Day Analytics)</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTheme('system')}
-                  className={`p-4 rounded-xl border text-left font-mono text-xs transition-all flex flex-col justify-between h-24 ${
-                    theme === 'system'
-                      ? 'bg-space-950 border-cyan-400 text-cyan-300 shadow-cyan-glow'
-                      : 'bg-space-950/60 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <Laptop className="w-5 h-5 text-violet-400" />
-                    {theme === 'system' && <Check className="w-4 h-4 text-cyan-400" />}
-                  </div>
-                  <div>
-                    <div className="font-bold text-slate-100">System Automatic</div>
-                    <div className="text-[10px] text-slate-500">Sync with OS</div>
-                  </div>
-                </button>
-              </div>
-
-              {/* Reduced Motion Toggle */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-mono font-bold text-slate-200">Reduced Motion Mode</h4>
-                  <p className="text-[11px] text-slate-400">
-                    Disables 3D mesh curvature parallax and intense camera animations.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={reducedMotion}
-                  onChange={(e) => setReducedMotion(e.target.checked)}
-                  className="w-5 h-5 rounded border-slate-700 text-cyan-500 focus:ring-0 cursor-pointer"
-                />
-              </div>
-            </div>
-          )}
+          {/* TAB 1: NOTIFICATIONS */}
 
           {/* TAB 2: NOTIFICATIONS */}
           {activeTab === 'notifications' && (

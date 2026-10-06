@@ -101,13 +101,93 @@ const Satellite3D: React.FC<{
   );
 };
 
-// Earth Sphere Component
+// Helper to create high-resolution 3D Earth texture procedurally
+const createEarthTexture = (): THREE.CanvasTexture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Deep Ocean Base
+    const oceanGradient = ctx.createLinearGradient(0, 0, 0, 1024);
+    oceanGradient.addColorStop(0, '#0B1528');
+    oceanGradient.addColorStop(0.3, '#0E2443');
+    oceanGradient.addColorStop(0.5, '#0B1D3A');
+    oceanGradient.addColorStop(0.7, '#0E2443');
+    oceanGradient.addColorStop(1, '#0B1528');
+    ctx.fillStyle = oceanGradient;
+    ctx.fillRect(0, 0, 2048, 1024);
+
+    // Latitude & Longitude Grid Overlay
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= 2048; x += 128) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 1024);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= 1024; y += 128) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(2048, y);
+      ctx.stroke();
+    }
+
+    // Draw continent landmass polygons
+    const drawLand = (points: [number, number][], color = '#1E4D2B') => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      points.forEach(([lon, lat], idx) => {
+        const px = ((lon + 180) / 360) * 2048;
+        const py = ((90 - lat) / 180) * 1024;
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    // North America
+    drawLand([[-160,65],[-130,70],[-70,72],[-55,50],[-75,35],[-80,25],[-105,20],[-120,32],[-130,55]], '#1F522F');
+    // South America
+    drawLand([[-90,18],[-75,10],[-50,-5],[-35,-10],[-40,-25],[-65,-55],[-75,-45],[-80,-10]], '#1B4D2A');
+    // Eurasia
+    drawLand([[-10,65],[30,72],[90,75],[140,70],[170,60],[140,35],[100,10],[75,25],[40,35],[25,40],[0,50]], '#225B34');
+    // Africa
+    drawLand([[-18,35],[35,33],[43,12],[50,10],[40,-30],[20,-35],[12,-5],[-15,10]], '#25633A');
+    // Australia & NZ
+    drawLand([[113,-14],[154,-14],[150,-38],[115,-35]], '#285934');
+    // Ice Caps
+    ctx.fillStyle = '#E2E8F0';
+    ctx.fillRect(0, 0, 2048, 80);
+    ctx.fillRect(0, 940, 2048, 84);
+
+    // Organic Topography Shading
+    for (let i = 0; i < 3000; i++) {
+      const rx = Math.random() * 2048;
+      const ry = Math.random() * 1024;
+      const rSize = Math.random() * 12 + 2;
+      ctx.fillStyle = Math.random() > 0.4 ? 'rgba(34, 197, 94, 0.25)' : 'rgba(2, 132, 199, 0.15)';
+      ctx.beginPath();
+      ctx.arc(rx, ry, rSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
+// Realistic 3D Earth Globe Component
 const Earth3D: React.FC<{ status: 'NOMINAL' | 'DEGRADED' | 'CRITICAL' }> = ({ status }) => {
   const earthRef = useRef<THREE.Mesh>(null);
   const orbitRingRef = useRef<THREE.Mesh>(null);
 
+  const earthTexture = React.useMemo(() => createEarthTexture(), []);
+
   useFrame(() => {
-    if (earthRef.current) earthRef.current.rotation.y += 0.001;
+    if (earthRef.current) earthRef.current.rotation.y += 0.0012;
     if (orbitRingRef.current) orbitRingRef.current.rotation.z += 0.0005;
   });
 
@@ -115,23 +195,20 @@ const Earth3D: React.FC<{ status: 'NOMINAL' | 'DEGRADED' | 'CRITICAL' }> = ({ st
 
   return (
     <group>
-      {/* Central Earth Globe */}
+      {/* Realistic 3D Earth Globe */}
       <mesh ref={earthRef}>
-        <sphereGeometry args={[2, 32, 32]} />
+        <sphereGeometry args={[2, 64, 64]} />
         <meshStandardMaterial
-          color="#0F172A"
-          roughness={0.6}
+          map={earthTexture}
+          roughness={0.65}
           metalness={0.1}
-          emissive="#0284C7"
-          emissiveIntensity={0.2}
-          wireframe
         />
       </mesh>
 
       {/* Earth Atmosphere Glow */}
       <mesh>
         <sphereGeometry args={[2.08, 32, 32]} />
-        <meshBasicMaterial color="#38BDF8" transparent opacity={0.12} />
+        <meshBasicMaterial color="#38BDF8" transparent opacity={0.18} />
       </mesh>
 
       {/* Orbit Ring Path */}
@@ -148,6 +225,138 @@ const Earth3D: React.FC<{ status: 'NOMINAL' | 'DEGRADED' | 'CRITICAL' }> = ({ st
         </mesh>
       )}
     </group>
+  );
+};
+
+// Realistic 2D/3D Earth Graphic Model for Tactical Radar View
+const RealisticEarthGraphic: React.FC<{ size?: number }> = ({ size = 130 }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let rotation = 0;
+
+    const render = () => {
+      rotation += 0.004;
+      const w = canvas.width;
+      const h = canvas.height;
+      const r = w / 2 - 6;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Save clipping path for sphere
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Deep ocean gradient
+      const ocean = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+      ocean.addColorStop(0, '#1E3A8A');
+      ocean.addColorStop(0.4, '#172554');
+      ocean.addColorStop(0.8, '#0F172A');
+      ocean.addColorStop(1, '#020617');
+      ctx.fillStyle = ocean;
+      ctx.fillRect(0, 0, w, h);
+
+      // Latitude / Longitude grid
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.18)';
+      ctx.lineWidth = 1;
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const yPos = cy + (lat / 90) * r;
+        const widthAtLat = Math.sqrt(Math.max(0, r * r - (yPos - cy) * (yPos - cy)));
+        ctx.beginPath();
+        ctx.ellipse(cx, yPos, widthAtLat, widthAtLat * 0.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Draw rotating continents
+      ctx.fillStyle = '#166534';
+      const continents = [
+        { baseLon: 0, points: [[-40, 20], [-20, 50], [20, 40], [30, 20], [10, 10], [-30, 10]] },
+        { baseLon: 25, points: [[0, -10], [25, -20], [15, -50], [-10, -40], [-15, -20]] },
+        { baseLon: 120, points: [[-30, 40], [40, 50], [60, 20], [40, -30], [10, -30], [-20, 10]] },
+        { baseLon: 220, points: [[-20, 30], [30, 40], [40, -10], [20, -40], [-10, -30]] }
+      ];
+
+      continents.forEach((cont) => {
+        ctx.beginPath();
+        cont.points.forEach(([dLon, lat], idx) => {
+          let lon = (cont.baseLon + dLon + rotation * 60) % 360;
+          if (lon < 0) lon += 360;
+          const radLon = ((lon - 180) * Math.PI) / 180;
+          const xPos = cx + Math.sin(radLon) * r;
+          const yPos = cy - (lat / 90) * r;
+          if (idx === 0) ctx.moveTo(xPos, yPos);
+          else ctx.lineTo(xPos, yPos);
+        });
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // Polar Ice Caps
+      ctx.fillStyle = '#F1F5F9';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - r * 0.85, r * 0.5, r * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + r * 0.85, r * 0.6, r * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cloud swirl highlights
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(rotation) * r * 0.35, cy + Math.sin(rotation) * r * 0.25, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3D Sphere Day/Night Terminator Lighting
+      const shadow = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, r * 0.3, cx, cy, r);
+      shadow.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+      shadow.addColorStop(0.5, 'rgba(0, 0, 0, 0.35)');
+      shadow.addColorStop(1, 'rgba(0, 0, 0, 0.85)');
+      ctx.fillStyle = shadow;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.restore();
+
+      // Atmosphere glow border rim
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 1, 0, Math.PI * 2);
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#06B6D4';
+      ctx.shadowBlur = 14;
+      ctx.stroke();
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-center">
+      <canvas
+        ref={canvasRef}
+        width={size}
+        height={size}
+        className="rounded-full shadow-[0_0_30px_rgba(6,182,212,0.5)] border border-cyan-400/30"
+      />
+      <div className="mt-2 px-2.5 py-0.5 bg-space-950/95 border border-cyan-500/50 rounded-full text-[10px] font-mono text-cyan-300 font-bold tracking-widest shadow-cyan-glow">
+        EARTH (REAL-TIME)
+      </div>
+    </div>
   );
 };
 
@@ -253,12 +462,8 @@ export const MissionScene: React.FC<MissionSceneProps> = ({
             <line x1="20" y1="200" x2="380" y2="200" stroke="#334155" strokeWidth="1" />
           </svg>
 
-          {/* Central Planetary Icon */}
-          <div className="w-28 h-28 rounded-full bg-space-900 border-2 border-cyan-500/40 flex items-center justify-center shadow-cyan-glow relative z-10">
-            <div className="w-20 h-20 rounded-full border border-cyan-400/20 bg-cyan-950/30 flex items-center justify-center">
-              <span className="font-tech text-xs text-cyan-400 font-bold">EARTH</span>
-            </div>
-          </div>
+          {/* Central Real Earth Graphic Model */}
+          <RealisticEarthGraphic size={130} />
 
           {/* Satellite Tactical Node */}
           <div

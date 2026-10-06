@@ -49,18 +49,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  const effectiveTheme: 'dark' | 'light' = theme === 'system' ? (systemIsDark ? 'dark' : 'light') : theme;
+  const effectiveTheme: 'dark' | 'light' = 'dark';
 
   useEffect(() => {
     const root = document.documentElement;
-    if (effectiveTheme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
-      root.classList.add('light');
-      root.classList.remove('dark');
-    }
-  }, [effectiveTheme]);
+    root.classList.add('dark');
+    root.classList.remove('light');
+  }, []);
 
   const setTheme = (newTheme: ThemeMode) => {
     setThemeState(newTheme);

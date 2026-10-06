@@ -191,7 +191,7 @@ export const AuthModal: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-tech font-bold text-xs tracking-widest uppercase rounded-xl shadow-cyan-glow transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 bg-[#66FCF1] hover:bg-[#88FFF8] text-[#0B0C10] font-tech font-bold text-xs tracking-widest uppercase rounded-xl shadow-[0_0_20px_rgba(102,252,241,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <span>VERIFYING CREDENTIALS...</span>

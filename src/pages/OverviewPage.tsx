@@ -24,8 +24,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
 }) => {
   return (
     <div className="space-y-6 pb-12 select-none">
-      {/* Cinematic Aerospace Top Hero Header */}
-      <div className="relative rounded-2xl bg-gradient-to-r from-space-900 via-space-850 to-space-900 border border-slate-800 p-8 shadow-2xl overflow-hidden radar-overlay">
+      {/* Cinematic Aerospace Top Hero Header (Fully Transparent for Background Visibility) */}
+      <div className="relative rounded-2xl bg-transparent border border-[#66FCF1]/30 p-8 shadow-2xl overflow-hidden radar-overlay">
         {/* Ambient Glow Backdrop */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -35,18 +35,18 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             <span>MISSION ALPHA // COMMAND CENTER</span>
           </div>
 
-          <h1 className="font-tech text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-wider text-slate-100 uppercase">
-            MISSION OPERATIONS <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">INTELLIGENCE</span>
+          <h1 className="font-tech text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-wider text-[#C5C6C7] uppercase">
+            MISSION OPERATIONS <span className="text-[#66FCF1]">INTELLIGENCE</span>
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-2xl">
+          <p className="text-sm sm:text-base text-[#C5C6C7]/80 font-normal leading-relaxed max-w-2xl">
             Evidence-grounded decision support for faster, safer and auditable mission operations. Trace every claim directly to verified telemetry logs.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <button
               onClick={() => onOpenCopilot()}
-              className="px-6 py-3 bg-gradient-to-r from-system to-blue-600 hover:from-system-bright hover:to-blue-500 text-black font-bold font-mono text-xs rounded-xl shadow-cyan-glow flex items-center gap-2.5 transition-all hover:scale-105"
+              className="px-6 py-3 bg-[#66FCF1] hover:bg-[#88FFF8] text-[#0B0C10] font-bold font-mono text-xs rounded-xl shadow-[0_0_20px_rgba(102,252,241,0.4)] flex items-center gap-2.5 transition-all hover:scale-105 cursor-pointer"
             >
               <Bot className="w-4 h-4" />
               <span>OPEN COPILOT</span>
