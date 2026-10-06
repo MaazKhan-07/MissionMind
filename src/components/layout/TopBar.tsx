@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Search,
   Bell,
@@ -8,23 +10,32 @@ import {
   Database,
   ShieldCheck,
   AlertCircle,
-  X
+  X,
+  Sun,
+  Moon,
+  Laptop,
+  User
 } from 'lucide-react';
 import { StatusIndicator } from '../common/StatusIndicator';
 
 interface TopBarProps {
   onOpenCommandPalette: () => void;
   onToggleMobileMenu: () => void;
+  onOpenProfile: () => void;
   isLiveMode: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   onOpenCommandPalette,
   onToggleMobileMenu,
+  onOpenProfile,
   isLiveMode
 }) => {
+  const { theme, effectiveTheme, setTheme } = useTheme();
+  const { user } = useAuth();
   const [utcTime, setUtcTime] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
 
   useEffect(() => {
     const updateClock = () => {
@@ -81,11 +92,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="w-7 h-7 rounded-lg object-cover border border-cyan-500/40 shadow-cyan-glow shrink-0"
           />
           <span className="font-tech text-lg font-bold tracking-widest text-slate-100 hidden sm:inline">
-            MISSION<span className="text-system">MIND</span>
+            MISSION<span className="text-cyan-400">MIND</span>
           </span>
           <span className="text-slate-600 hidden sm:inline">/</span>
           <span className="font-mono text-xs text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded font-semibold">
-            SAT-01 // MISSION ALPHA
+            SAT-01 // ORBITAL-01
           </span>
         </div>
       </div>
@@ -94,10 +105,10 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex-1 max-w-xl mx-4 hidden sm:block">
         <button
           onClick={onOpenCommandPalette}
-          className="w-full h-9 bg-space-950/80 border border-slate-800 hover:border-system/50 rounded-lg px-3 flex items-center justify-between text-slate-400 hover:text-slate-200 transition-all group"
+          className="w-full h-9 bg-space-950/80 border border-slate-800 hover:border-cyan-500/50 rounded-lg px-3 flex items-center justify-between text-slate-400 hover:text-slate-200 transition-all group"
         >
           <div className="flex items-center gap-2 text-xs font-mono">
-            <Search className="w-3.5 h-3.5 text-slate-500 group-hover:text-system transition-colors" />
+            <Search className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
             <span>Ask MissionMind anything or search telemetry...</span>
           </div>
           <kbd className="hidden lg:inline-flex items-center gap-1 text-[10px] font-mono bg-space-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
@@ -106,11 +117,11 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
 
-      {/* Right: Clock & Status Indicators */}
-      <div className="flex items-center gap-4">
+      {/* Right: Clock & Controls */}
+      <div className="flex items-center gap-3">
         {/* Live UTC Clock */}
         <div className="hidden lg:flex items-center gap-1.5 font-mono text-xs text-slate-300 bg-space-950/80 px-2.5 py-1 rounded border border-slate-800">
-          <Clock className="w-3.5 h-3.5 text-system animate-spin" style={{ animationDuration: '10s' }} />
+          <Clock className="w-3.5 h-3.5 text-cyan-400" />
           <span>{utcTime || '14:32:18 UTC'}</span>
         </div>
 
@@ -130,6 +141,50 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="text-[10px] font-mono text-slate-400 uppercase">AI</span>
             <StatusIndicator status="READY" label="READY" size="sm" />
           </div>
+        </div>
+
+        {/* Theme Switcher Button */}
+        <div className="relative">
+          <button
+            onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+            className="p-2 rounded-lg bg-space-800 hover:bg-space-750 text-slate-300 hover:text-white transition-colors"
+            title="Toggle Theme"
+          >
+            {effectiveTheme === 'dark' ? (
+              <Moon className="w-4 h-4 text-cyan-400" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-500" />
+            )}
+          </button>
+
+          {themeDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-36 bg-space-900 border border-slate-700/80 rounded-xl shadow-2xl p-1 z-50 font-mono text-xs text-slate-300">
+              <button
+                onClick={() => { setTheme('dark'); setThemeDropdownOpen(false); }}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
+                  theme === 'dark' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5" /> Dark
+              </button>
+              <button
+                onClick={() => { setTheme('light'); setThemeDropdownOpen(false); }}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
+                  theme === 'light' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5" /> Light
+              </button>
+              <button
+                onClick={() => { setTheme('system'); setThemeDropdownOpen(false); }}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-space-800 ${
+                  theme === 'system' ? 'text-cyan-400 font-bold bg-space-800/80' : ''
+                }`}
+              >
+                <Laptop className="w-3.5 h-3.5" /> System
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Notifications Dropdown Button */}
@@ -176,7 +231,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div className="p-2 bg-space-950 text-center border-t border-slate-800">
                 <button
                   onClick={() => setShowNotifications(false)}
-                  className="text-[11px] font-mono text-system hover:underline"
+                  className="text-[11px] font-mono text-cyan-400 hover:underline"
                 >
                   Clear All Notifications
                 </button>
@@ -184,6 +239,17 @@ export const TopBar: React.FC<TopBarProps> = ({
             </div>
           )}
         </div>
+
+        {/* Profile Avatar Trigger Button */}
+        <button
+          onClick={onOpenProfile}
+          className="flex items-center gap-2 p-1 rounded-lg bg-space-800 hover:bg-space-750 border border-slate-700 transition-colors"
+          title="Open Operator Profile"
+        >
+          <div className="w-6 h-6 rounded-md bg-cyan-950 border border-cyan-500/40 text-cyan-400 flex items-center justify-center font-bold text-[10px]">
+            {user?.callsign || 'MK'}
+          </div>
+        </button>
       </div>
     </header>
   );
