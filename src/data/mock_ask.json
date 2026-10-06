@@ -1,0 +1,97 @@
+{
+  "default_query": {
+    "query": "Why did the comms subsystem fail at 14:32?",
+    "time_window": {
+      "start": "2026-03-14 14:28:00 UTC",
+      "end": "2026-03-14 14:35:00 UTC"
+    },
+    "retrieved_records_count": 6,
+    "retrieval_strength": "HIGH",
+    "abstain": false,
+    "facts": [
+      {
+        "id": "F-01",
+        "statement": "Battery bus voltage dropped to 23.8 V at 14:31:42 UTC.",
+        "citation": "T-19281",
+        "parameter": "battery_bus_voltage",
+        "observed_value": "23.8 V"
+      },
+      {
+        "id": "F-02",
+        "statement": "EPS current draw increased by 17% during RF amplifier spool-up.",
+        "citation": "T-19282",
+        "parameter": "comms_current_draw",
+        "observed_value": "+17%"
+      },
+      {
+        "id": "F-03",
+        "statement": "S-Band transmitter signal strength decreased by 12 dBm at 14:32:18 UTC.",
+        "citation": "LOG-04412",
+        "parameter": "signal_strength",
+        "observed_value": "-12 dBm"
+      }
+    ],
+    "inferences": [
+      {
+        "id": "INF-01",
+        "statement": "Power instability in the electrical power subsystem (EPS) is the primary contributor to communication link degradation.",
+        "confidence": "HIGH",
+        "reasoning": "2 independent telemetry observations confirm simultaneous bus voltage dip and RF amplifier thermal load spike matching historical incident pattern.",
+        "citations": ["T-19281", "T-19282", "INC-047"]
+      }
+    ],
+    "recommendations": [
+      {
+        "step_number": 1,
+        "action": "Check battery bus voltage and switch EPS regulator to redundant Bus-B.",
+        "procedure_id": "COMMS-04",
+        "procedure_name": "Communications Degradation & Power Interlock Procedure"
+      },
+      {
+        "step_number": 2,
+        "action": "Verify communications transmitter current draw and toggle low-power S-Band mode.",
+        "procedure_id": "COMMS-04",
+        "procedure_name": "Communications Degradation & Power Interlock Procedure"
+      },
+      {
+        "step_number": 3,
+        "action": "Compare telemetry signature and voltage recovery curves with historical incident INC-047.",
+        "procedure_id": "COMMS-04",
+        "procedure_name": "Communications Degradation & Power Interlock Procedure"
+      }
+    ],
+    "dropped_claims": [
+      {
+        "id": "DC-01",
+        "claim": "Battery bus voltage dropped below catastrophic threshold to 21.5 V.",
+        "reason": "Numerical mismatch against evidence record T-19281 which confirms actual value of 23.8 V.",
+        "source_cited": "T-19281",
+        "raw_value_in_record": "23.8 V"
+      }
+    ],
+    "audit_session_id": "MM-2026-001",
+    "chain_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "abstain_query": {
+    "query": "What was the gyroscope bias on day 3?",
+    "time_window": {
+      "start": "2026-03-11 00:00:00 UTC",
+      "end": "2026-03-11 23:59:59 UTC"
+    },
+    "retrieved_records_count": 0,
+    "retrieval_strength": "LOW",
+    "abstain": true,
+    "abstain_reason": "MissionMind could not establish a reliable answer from the available mission records.",
+    "missing_data": [
+      "Gyroscope bias telemetry (ADCS-GYRO-03)",
+      "Attitude subsystem operational logs",
+      "Day 3 sensor calibration baseline record"
+    ],
+    "facts": [],
+    "inferences": [],
+    "recommendations": [],
+    "dropped_claims": [],
+    "audit_session_id": "MM-2026-009",
+    "chain_hash": "a4f891b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abc"
+  }
+}
