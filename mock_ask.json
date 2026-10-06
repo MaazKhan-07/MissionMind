@@ -1,0 +1,133 @@
+{
+  "answer": {
+    "abstain": false,
+    "abstain_reason": null,
+    "missing_data": [],
+    "facts": [
+      {
+        "claim": "Battery bus voltage dropped to 23.8 V at 14:31:42 UTC, below nominal 24.5 V minimum threshold.",
+        "citation": "T-19281",
+        "verifiable": true
+      },
+      {
+        "claim": "Communications transmitter RF power output decreased by 4.2 dBm following EPS bus voltage drop.",
+        "citation": "T-19282",
+        "verifiable": true
+      }
+    ],
+    "inferences": [
+      {
+        "claim": "Power instability in EPS main bus is the primary driver of communication signal degradation.",
+        "citations": ["T-19281", "T-19282", "INC-047"]
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "Execute COMMS-04 procedure Step 1: Verify battery bus voltage and switch high-power payloads to standby.",
+        "procedure_id": "COMMS-04",
+        "citations": ["COMMS-04", "T-19281"]
+      }
+    ]
+  },
+  "records": {
+    "T-19281": {
+      "id": "T-19281",
+      "type": "Telemetry",
+      "timestamp": "2026-03-14 14:31:42 UTC",
+      "subsystem": "EPS",
+      "parameter": "battery_bus_voltage",
+      "value": "23.8 V",
+      "limit": "24.5 – 29.0 V",
+      "status": "LOW",
+      "content": "EPS Battery Bus Voltage measured 23.8V (Warning threshold 24.5V)."
+    },
+    "T-19282": {
+      "id": "T-19282",
+      "type": "Telemetry",
+      "timestamp": "2026-03-14 14:32:18 UTC",
+      "subsystem": "COMMS",
+      "parameter": "signal_strength_dbm",
+      "value": "-102.4 dBm",
+      "limit": "-90.0 dBm",
+      "status": "DEGRADED",
+      "content": "S-Band Transceiver signal level dropped to -102.4 dBm due to bus power throttle."
+    },
+    "INC-047": {
+      "id": "INC-047",
+      "type": "Incident",
+      "timestamp": "2025-11-04 09:12:00 UTC",
+      "subsystem": "EPS / COMMS",
+      "parameter": "bus_voltage_drop",
+      "value": "23.6 V",
+      "limit": "24.5 V",
+      "status": "RESOLVED",
+      "content": "Historical incident: EPS voltage drop caused automatic comms transmitter power backoff. Resolved by executing COMMS-04 payload load shedding."
+    },
+    "COMMS-04": {
+      "id": "COMMS-04",
+      "type": "Procedure",
+      "timestamp": "2025-01-15 00:00:00 UTC",
+      "subsystem": "COMMS",
+      "parameter": "operational_procedure",
+      "value": "REV-3",
+      "limit": "N/A",
+      "status": "APPROVED",
+      "content": "COMMS-04: Communications Degradation Procedure. Step 1: Check battery bus voltage. Step 2: Verify comms current draw. Step 3: Shed secondary thermal heaters."
+    }
+  },
+  "dropped": 0,
+  "dropped_claims": [],
+  "retrieval_strength": 0.94,
+  "timeline": [
+    {
+      "timestamp": "14:28:02",
+      "event": "Battery Bus Voltage Nominal (27.4 V)",
+      "subsystem": "EPS",
+      "source_id": "T-19280"
+    },
+    {
+      "timestamp": "14:29:17",
+      "event": "Solar Array Temperature rising rapidly (+14°C)",
+      "subsystem": "THERMAL",
+      "source_id": "T-19279"
+    },
+    {
+      "timestamp": "14:30:04",
+      "event": "EPS Current draw increased to 18.2A",
+      "subsystem": "EPS",
+      "source_id": "T-19280B"
+    },
+    {
+      "timestamp": "14:31:42",
+      "event": "Battery Bus Voltage drop to 23.8 V (UNDERVOLTAGE ALERT)",
+      "subsystem": "EPS",
+      "source_id": "T-19281"
+    },
+    {
+      "timestamp": "14:32:18",
+      "event": "Comms signal strength drops to -102.4 dBm",
+      "subsystem": "COMMS",
+      "source_id": "T-19282"
+    },
+    {
+      "timestamp": "14:33:01",
+      "event": "Ground Station flags ANOM-001 Communication Degradation",
+      "subsystem": "GROUND",
+      "source_id": "LOG-1002"
+    }
+  ],
+  "injection_detected": false,
+  "injection_details": null,
+  "similar_incidents": [
+    {
+      "id": "INC-047",
+      "title": "Power Bus Voltage Dip causing Transceiver RF Power Drop",
+      "similarity": 0.92,
+      "reasons": [
+        "Identical EPS bus undervoltage trigger condition",
+        "Matching S-band signal power loss signature",
+        "Same temporal sequence of EPS drop followed by Comms alarm"
+      ]
+    }
+  ]
+}
