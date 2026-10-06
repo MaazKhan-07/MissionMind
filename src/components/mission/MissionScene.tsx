@@ -218,7 +218,21 @@ export const MissionScene: React.FC<MissionSceneProps> = ({
 
       {/* 3D R3F View */}
       {use3D && hasWebGL ? (
-        <Canvas camera={{ position: [0, 2, 9], fov: 45 }}>
+        <Canvas
+          camera={{ position: [0, 2, 9], fov: 45 }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: false
+          }}
+          dpr={[1, 1.5]}
+          onCreated={({ gl }) => {
+            const dom = gl.domElement;
+            dom.addEventListener('webglcontextlost', (e) => e.preventDefault(), false);
+            dom.addEventListener('webglcontextrestored', () => gl.setSize(dom.clientWidth, dom.clientHeight), false);
+          }}
+        >
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1.5} />
           <pointLight position={[-10, -10, -10]} intensity={0.5} color="#00F0FF" />

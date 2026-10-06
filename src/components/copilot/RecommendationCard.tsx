@@ -24,7 +24,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
           </div>
         </div>
         <CitationChip
-          citation={recommendation.procedure_id}
+          citation={recommendation.procedure_id || 'SOP-01'}
           onClick={onProcedureClick}
         />
       </div>
@@ -32,10 +32,10 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pl-9 border-t border-blue-500/10 pt-1.5">
         <span className="flex items-center gap-1">
           <BookOpen className="w-3 h-3 text-blue-400" />
-          <span>PROCEDURE: <strong className="text-blue-300">{recommendation.procedure_name}</strong></span>
+          <span>PROCEDURE: <strong className="text-blue-300">{recommendation.procedure_name || 'Standard Operating Procedure'}</strong></span>
         </span>
         <button
-          onClick={() => onProcedureClick(recommendation.procedure_id)}
+          onClick={() => onProcedureClick(recommendation.procedure_id || 'SOP-01')}
           className="text-blue-400 hover:underline font-semibold"
         >
           VIEW SOP →

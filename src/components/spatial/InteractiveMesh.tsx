@@ -203,11 +203,15 @@ export const InteractiveMesh: React.FC<InteractiveMeshProps> = ({
         }}
         dpr={[1, 1.5]} // Performance safeguard for high-DPI screens
         onCreated={({ gl }) => {
-          gl.domElement.addEventListener('webglcontextlost', (e) => {
+          const dom = gl.domElement;
+          const onLost = (e: Event) => {
             e.preventDefault();
-            console.warn('MissionMind: WebGL Context Lost, falling back.');
-            setHasWebGL(false);
-          }, false);
+          };
+          const onRestored = () => {
+            gl.setSize(dom.clientWidth, dom.clientHeight);
+          };
+          dom.addEventListener('webglcontextlost', onLost, false);
+          dom.addEventListener('webglcontextrestored', onRestored, false);
         }}
       >
         <MeshSurface reducedMotion={reducedMotion} />

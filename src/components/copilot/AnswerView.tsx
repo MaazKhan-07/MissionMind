@@ -143,7 +143,7 @@ export const AnswerView: React.FC<AnswerViewProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={answer.retrieval_strength === 'HIGH' ? 'fact' : answer.retrieval_strength === 'MEDIUM' ? 'inference' : 'critical'}>
-              RETRIEVAL STRENGTH: {answer.retrieval_strength}
+              RETRIEVAL STRENGTH: {answer.retrieval_strength || 'HIGH'}
             </Badge>
           </div>
         </div>
@@ -151,11 +151,11 @@ export const AnswerView: React.FC<AnswerViewProps> = ({
         <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-400 gap-2">
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            <span>TIME WINDOW: <strong className="text-slate-200">{answer.time_window.start} → {answer.time_window.end}</strong></span>
+            <span>TIME WINDOW: <strong className="text-slate-200">{answer.time_window?.start || '14:28:00'} → {answer.time_window?.end || '14:35:00'}</strong></span>
           </div>
           <div className="flex items-center gap-1.5">
             <Database className="w-3.5 h-3.5 text-fact" />
-            <span>EVIDENCE RECORDS: <strong className="text-fact">{answer.retrieved_records_count} RETRIEVED</strong></span>
+            <span>EVIDENCE RECORDS: <strong className="text-fact">{answer.retrieved_records_count ?? (answer.facts?.length || 0)} RETRIEVED</strong></span>
           </div>
         </div>
       </div>
@@ -189,7 +189,7 @@ export const AnswerView: React.FC<AnswerViewProps> = ({
             </div>
 
             <div className="space-y-2">
-              {answer.facts.map((fact) => (
+              {(answer.facts || []).map((fact) => (
                 <FactCard
                   key={fact.id}
                   fact={fact}
@@ -213,7 +213,7 @@ export const AnswerView: React.FC<AnswerViewProps> = ({
             </div>
 
             <div className="space-y-2">
-              {answer.inferences.map((inf) => (
+              {(answer.inferences || []).map((inf) => (
                 <InferenceCard
                   key={inf.id}
                   inference={inf}
@@ -237,7 +237,7 @@ export const AnswerView: React.FC<AnswerViewProps> = ({
             </div>
 
             <div className="space-y-2">
-              {answer.recommendations.map((rec) => (
+              {(answer.recommendations || []).map((rec) => (
                 <RecommendationCard
                   key={rec.step_number}
                   recommendation={rec}

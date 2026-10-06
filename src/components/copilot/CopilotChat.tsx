@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CopilotAnswer, EvidenceRecord } from '../../types';
 import { AnswerView } from './AnswerView';
 import { EvidencePanel } from '../evidence/EvidencePanel';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { Send, Bot, AlertTriangle, HelpCircle, ShieldAlert, Sparkles, X, Database } from 'lucide-react';
 
 interface CopilotChatProps {
@@ -150,18 +151,20 @@ export const CopilotChat: React.FC<CopilotChatProps> = ({
 
       {/* CENTER COLUMN: Evidence Grounded Answer View */}
       <div className="flex-1 bg-space-900 border border-slate-800 rounded-xl p-4 overflow-y-auto">
-        <AnswerView
-          answer={answer}
-          loading={loading}
-          onCitationClick={onCitationClick}
-          onProcedureClick={onProcedureClick}
-          onViewEvidence={onViewEvidenceTab}
-          onTryQuery={(q) => {
-            setQueryInput(q);
-            onSendQuery(q);
-          }}
-          activeCitation={selectedEvidence?.id}
-        />
+        <ErrorBoundary fallbackTitle="Copilot Reasoning Subsystem Containment">
+          <AnswerView
+            answer={answer}
+            loading={loading}
+            onCitationClick={onCitationClick}
+            onProcedureClick={onProcedureClick}
+            onViewEvidence={onViewEvidenceTab}
+            onTryQuery={(q) => {
+              setQueryInput(q);
+              onSendQuery(q);
+            }}
+            activeCitation={selectedEvidence?.id}
+          />
+        </ErrorBoundary>
       </div>
 
       {/* RIGHT COLUMN: Evidence Slide-over Inspector */}

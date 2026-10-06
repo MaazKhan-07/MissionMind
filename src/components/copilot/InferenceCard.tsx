@@ -39,7 +39,7 @@ export const InferenceCard: React.FC<InferenceCardProps> = ({
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <span className="text-[10px] font-mono text-slate-400">SUPPORTING EVIDENCE:</span>
-          {inference.citations.map((cit) => (
+          {(inference.citations || []).map((cit) => (
             <CitationChip
               key={cit}
               citation={cit}

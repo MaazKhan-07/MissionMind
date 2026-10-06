@@ -17,7 +17,7 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
 
     video.currentTime = 0;
 
-    // Attempt unmuted autoplay as requested
+    // Attempt autoplay (with automatic muted fallback to conform to browser autoplay policies)
     const startPlayback = async () => {
       try {
         video.muted = false;
@@ -25,10 +25,16 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
         setLoading(false);
         setAutoplayBlocked(false);
       } catch (err) {
-        console.info('MissionMind: Browser policy blocked unmuted autoplay. User interaction prompt displayed.');
-        // Browser requires user gesture for unmuted playback
-        setLoading(false);
-        setAutoplayBlocked(true);
+        // Browser requires user gesture for unmuted sound; play muted automatically so video plays smoothly
+        try {
+          video.muted = true;
+          await video.play();
+          setLoading(false);
+          setAutoplayBlocked(false);
+        } catch (mutedErr) {
+          setLoading(false);
+          setAutoplayBlocked(true);
+        }
       }
     };
 
