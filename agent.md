@@ -31,6 +31,18 @@ MissionMind is an autonomous decision-support copilot for space operations crews
 | **Critical / Failure** | 🔴 Red | `#EF4444` | Active anomalies, link drops, voltage breaches |
 | **System / Interaction** | 🩵 Cyan | `#06B6D4` | System state, UI controls, 3D orbit pulses |
 
+### 2.1 Workstation Theme System & 70/20/10 Ratio
+- **Void Black Theme (Command Station Dark)**:
+  - Background (70%): `#0B0F19` (*Void Black*) & `#111827` (*Deep Orbital Slate*)
+  - Surfaces & Text (20%): `#F8FAFC` (*Starlight White*) & `#94A3B8` (*Lunar Grey*)
+  - Accents (10%): `#06B6D4` (*Electric Cyan*) & `#8B5CF6` (*Nebula Violet*)
+- **Daylight Aerospace Theme (Light)**:
+  - Background: `#F4F7FA` | Surface: `#FFFFFF` | Border: `#D9E2EC` | Text: `#0F172A` | Brand: `#7C3AED` | Interactive: `#0284C7`
+- **Spatial UI Layering**:
+  - `Layer 0`: Deep space background + stars
+  - `Layer 1`: Interactive 3D cursor-projecting mesh / orbital telemetry scene
+  - `Layer 2`: Glassmorphism 2.0 panels (`rgba(17,24,39,0.72)`, `backdrop-filter: blur(16px)`)
+
 ---
 
 ## 🔒 3. Data Schema Contracts (TypeScript & Pydantic)
