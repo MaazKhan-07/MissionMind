@@ -1,15 +1,51 @@
+# MissionMind .gitignore
+
+# Environment
+.env
+*.env
+
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+data/generated/
+
+# Node & Frontend
+node_modules/
+**/node_modules/
+.next/
+.vite/
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
-*.db-journal
-.env
-.DS_Store
-node_modules/
-dist/
-.vite/
-backend/venv/
-*.egg-info/
+
+# Logs
+*.log
