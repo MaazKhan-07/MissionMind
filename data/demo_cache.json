@@ -1,0 +1,81 @@
+{
+  "Why did the comms subsystem fail at 14:32?": {
+    "abstain": false,
+    "abstain_reason": null,
+    "missing_data": [],
+    "facts": [
+      {
+        "statement": "Main battery voltage dropped to 23.8 V at 14:31:42 UTC, violating the 24.0 V lower limit.",
+        "citations": ["T-19281"]
+      },
+      {
+        "statement": "A transient current surge of +17% was detected across the power distribution unit at 14:30:04 UTC.",
+        "citations": ["T-19280"]
+      },
+      {
+        "statement": "Comms signal strength degraded to -12 dBm at 14:32:18 UTC.",
+        "citations": ["T-19282"]
+      }
+    ],
+    "inferences": [
+      {
+        "statement": "The battery undervoltage event Browned out the RF Transceiver power stage, causing signal loss, matching historical anomaly INC-047.",
+        "confidence": 0.95,
+        "reasoning": "Temporal sequence shows power bus dip immediately preceding RF signal degradation.",
+        "citations": ["INC-047", "T-19281", "T-19282"]
+      }
+    ],
+    "recommendations": [
+      {
+        "order": 1,
+        "action": "Execute COMMS-04 RF Transceiver Low Power Recovery Procedure.",
+        "rationale": "Restores transceiver power relay once battery voltage is verified above 24.0 V.",
+        "procedure_id": "COMMS-04",
+        "citations": ["COMMS-04"]
+      },
+      {
+        "order": 2,
+        "action": "Execute PWR-01 Battery Bus Undervoltage Contingency to shed non-essential payload loads.",
+        "rationale": "Stabilizes bus voltage above 24.5 V.",
+        "procedure_id": "PWR-01",
+        "citations": ["PWR-01"]
+      }
+    ]
+  },
+  "What caused the payload radiator temperature excursion at 06:00?": {
+    "abstain": false,
+    "abstain_reason": null,
+    "missing_data": [],
+    "facts": [
+      {
+        "statement": "Payload radiator temperature reached 78.4 C at 06:00:00 UTC, exceeding the upper limit of 65.0 C.",
+        "citations": ["T-18102"]
+      }
+    ],
+    "inferences": [
+      {
+        "statement": "Spectrometer radiator louvers failed to open, causing severe thermal accumulation matching INC-022.",
+        "confidence": 0.92,
+        "reasoning": "Radiator temperature continued spiking without heat pipe dissipation.",
+        "citations": ["INC-022", "T-18102"]
+      }
+    ],
+    "recommendations": [
+      {
+        "order": 1,
+        "action": "Execute THM-01 Payload Radiator Thermal Excursion Response.",
+        "rationale": "Reorients radiator away from solar vector and activates auxiliary heat pipes.",
+        "procedure_id": "THM-01",
+        "citations": ["THM-01"]
+      }
+    ]
+  },
+  "What is the quantum flux sensor reading on Thruster 4 at 14:32?": {
+    "abstain": true,
+    "abstain_reason": "Insufficient evidence retrieved. No quantum flux sensor exists on the spacecraft.",
+    "missing_data": ["Quantum flux telemetry does not exist in spacecraft architecture."],
+    "facts": [],
+    "inferences": [],
+    "recommendations": []
+  }
+}

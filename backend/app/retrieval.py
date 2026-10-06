@@ -1,329 +1,246 @@
-"""
-MissionMind Hybrid Retrieval Engine
-====================================
-Implements Section 5.2 of the architecture:
-  1. Time-aware SQL retrieval
-  2. FTS5 full-text retrieval
-  3. Vector (semantic) retrieval
-  4. Reciprocal Rank Fusion (RRF)
-  5. Retrieval strength scoring
-
-Pipeline:
-  QUERY → SQL + FTS + VECTOR → RRF → TOP EVIDENCE → STRENGTH
-"""
-
-from __future__ import annotations
-
-import logging
-from typing import Any, Optional
-
+import re
+import sqlite3
 import numpy as np
+from typing import List, Dict, Any, Tuple, Optional, Set
+from datetime import datetime, timedelta
+from backend.app.config import settings
+from backend.app.db import get_connection, deserialize_vec
 
-from app import db
-from app.config import (
-    EMBEDDING_DIM,
-    EMBEDDING_MODEL,
-    RETRIEVAL_MIN_STRENGTH,
-    RETRIEVAL_TOP_K,
-    RRF_K,
-)
+STOPWORDS = {
+    "why", "did", "the", "at", "is", "what", "how", "when", "who", "which",
+    "and", "or", "in", "on", "of", "to", "for", "with", "about", "was", "were",
+    "a", "an", "by", "from", "be", "been", "there", "cause", "caused"
+}
 
-logger = logging.getLogger("missionmind.retrieval")
+_embed_model = None
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Embedding Model (lazy-loaded singleton)
-# ═══════════════════════════════════════════════════════════════════════════
-
-_embedding_model = None
-
-
-def _get_embedding_model():
-    """Lazy-load the sentence transformer model."""
-    global _embedding_model
-    if _embedding_model is None:
+def get_embed_model():
+    global _embed_model
+    if _embed_model is None:
         try:
             from sentence_transformers import SentenceTransformer
-            _embedding_model = SentenceTransformer(EMBEDDING_MODEL)
-            logger.info("Loaded embedding model: %s", EMBEDDING_MODEL)
-        except Exception as e:
-            logger.warning("Could not load embedding model: %s", e)
-            _embedding_model = None
-    return _embedding_model
+            _embed_model = SentenceTransformer(settings.EMBEDDING_MODEL)
+        except Exception:
+            _embed_model = None
+    return _embed_model
 
+def get_text_embedding(text: str) -> np.ndarray:
+    model = get_embed_model()
+    if model is not None:
+        return model.encode(text, convert_to_numpy=True, normalize_embeddings=True)
+    
+    vec = np.zeros(384, dtype=np.float32)
+    for word in text.lower().split():
+        h = abs(hash(word)) % 384
+        vec[h] += 1.0
+    norm = np.linalg.norm(vec)
+    return vec / norm if norm > 0 else vec
 
-def compute_embedding(text: str) -> Optional[np.ndarray]:
-    """Compute embedding vector for a text string."""
-    model = _get_embedding_model()
-    if model is None:
-        return None
-    return model.encode(text, normalize_embeddings=True)
+def get_text_embeddings_batch(texts: List[str]) -> List[np.ndarray]:
+    model = get_embed_model()
+    if model is not None:
+        embeddings = model.encode(texts, convert_to_numpy=True, normalize_embeddings=True, batch_size=64, show_progress_bar=False)
+        return [embeddings[i] for i in range(len(texts))]
+    
+    return [get_text_embedding(t) for t in texts]
 
+def extract_time_anchor(query: str) -> Optional[datetime]:
+    iso_match = re.search(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?", query)
+    if iso_match:
+        try:
+            return datetime.fromisoformat(iso_match.group(0).replace(" ", "T"))
+        except ValueError:
+            pass
 
-def embed_record(record: dict[str, Any]) -> Optional[np.ndarray]:
-    """Create embedding for a mission record."""
-    text = _record_to_text(record)
-    return compute_embedding(text)
-
-
-def _record_to_text(record: dict[str, Any]) -> str:
-    """Convert a mission record to a text representation for embedding."""
-    parts = [
-        f"subsystem: {record.get('subsystem', '')}",
-        f"type: {record.get('record_type', '')}",
-        record.get("text", ""),
-    ]
-    params = record.get("parameters", {})
-    if isinstance(params, dict):
-        for k, v in params.items():
-            parts.append(f"{k}: {v}")
-    return " ".join(parts)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Retrieval Methods
-# ═══════════════════════════════════════════════════════════════════════════
-
-def retrieve_sql(
-    subsystems: list[str],
-    time_start: Optional[str] = None,
-    time_end: Optional[str] = None,
-    record_type: Optional[str] = None,
-    severity: Optional[str] = None,
-    limit: int = RETRIEVAL_TOP_K,
-) -> list[dict[str, Any]]:
-    """
-    SQL / structured retrieval.
-    Useful for timestamps, subsystem, parameter, severity, record IDs.
-    """
-    results = []
-    if subsystems:
-        for sub in subsystems:
-            records = db.search_records_sql(
-                subsystem=sub,
-                record_type=record_type,
-                severity=severity,
-                time_start=time_start,
-                time_end=time_end,
-                limit=limit,
-            )
-            results.extend(records)
-    else:
-        records = db.search_records_sql(
-            record_type=record_type,
-            severity=severity,
-            time_start=time_start,
-            time_end=time_end,
-            limit=limit,
+    time_match = re.search(r"\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b", query)
+    if time_match:
+        hour = int(time_match.group(1))
+        minute = int(time_match.group(2))
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT ts_utc FROM records WHERE strftime('%H', ts_utc) = ? AND strftime('%M', ts_utc) = ? ORDER BY ts_utc ASC LIMIT 1;",
+            (f"{hour:02d}", f"{minute:02d}")
         )
-        results.extend(records)
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return datetime.fromisoformat(row["ts_utc"].replace("Z", "+00:00"))
 
-    # Deduplicate
-    seen = set()
-    unique = []
-    for r in results:
-        if r["id"] not in seen:
-            seen.add(r["id"])
-            unique.append(r)
-    return unique
+    return None
 
+def perform_sql_retrieval(
+    time_anchor: Optional[datetime],
+    subsystem: Optional[str],
+    conn: sqlite3.Connection
+) -> List[Tuple[str, int]]:
+    cursor = conn.cursor()
+    results = []
 
-def retrieve_fts(query: str, limit: int = RETRIEVAL_TOP_K) -> list[dict[str, Any]]:
-    """
-    Full-text search using SQLite FTS5.
-    """
+    if time_anchor:
+        start_ts = (time_anchor - timedelta(minutes=settings.TIME_WINDOW_BEFORE_MIN)).isoformat()
+        end_ts = (time_anchor + timedelta(minutes=settings.TIME_WINDOW_AFTER_MIN)).isoformat()
+        cursor.execute("""
+            SELECT record_id FROM records
+            WHERE ts_utc >= ? AND ts_utc <= ?
+            ORDER BY severity = 'critical' DESC, severity = 'warning' DESC, ts_utc ASC;
+        """, (start_ts, end_ts))
+        for idx, row in enumerate(cursor.fetchall()):
+            results.append((row["record_id"], idx + 1))
+
+    if subsystem:
+        # Also retrieve relevant procedures and historical incidents
+        cursor.execute("""
+            SELECT record_id FROM records
+            WHERE subsystem LIKE ? AND rtype IN ('procedure', 'incident')
+            ORDER BY rtype = 'procedure' DESC, severity = 'critical' DESC LIMIT 10;
+        """, (f"%{subsystem}%",))
+        offset = len(results)
+        for idx, row in enumerate(cursor.fetchall()):
+            results.append((row["record_id"], offset + idx + 1))
+
+    return results
+
+def perform_fts_retrieval(query: str, conn: sqlite3.Connection) -> List[Tuple[str, int]]:
+    cursor = conn.cursor()
+    raw_tokens = re.findall(r"[A-Za-z0-9_-]+", query)
+    tokens = [t for t in raw_tokens if t.lower() not in STOPWORDS and len(t) > 1]
+    
+    if not tokens:
+        tokens = raw_tokens
+    if not tokens:
+        return []
+
+    fts_query = " OR ".join([f'"{t}"' for t in tokens])
+
     try:
-        return db.search_records_fts(query, limit=limit)
-    except Exception as e:
-        logger.warning("FTS search failed: %s", e)
-        return []
+        cursor.execute("""
+            SELECT record_id, rank
+            FROM records_fts
+            WHERE records_fts MATCH ?
+            ORDER BY rank ASC LIMIT 30;
+        """, (fts_query,))
+        rows = cursor.fetchall()
+        return [(r["record_id"], idx + 1) for idx, r in enumerate(rows)]
+    except sqlite3.OperationalError:
+        cursor.execute("""
+            SELECT record_id FROM records
+            WHERE text LIKE ? OR record_id LIKE ?
+            LIMIT 20;
+        """, (f"%{tokens[0]}%", f"%{tokens[0]}%"))
+        rows = cursor.fetchall()
+        return [(r["record_id"], idx + 1) for idx, r in enumerate(rows)]
 
+def perform_vector_retrieval(query_vec: np.ndarray, conn: sqlite3.Connection) -> List[Tuple[str, int, float]]:
+    cursor = conn.cursor()
+    cursor.execute("SELECT record_id, vec FROM embeddings;")
+    rows = cursor.fetchall()
 
-def retrieve_vector(
-    query: str, limit: int = RETRIEVAL_TOP_K
-) -> list[dict[str, Any]]:
-    """
-    Vector / semantic retrieval using cosine similarity.
-    """
-    query_embedding = compute_embedding(query)
-    if query_embedding is None:
-        return []
+    scored = []
+    for r in rows:
+        r_vec = deserialize_vec(r["vec"])
+        dot_val = float(np.dot(query_vec, r_vec))
+        scored.append((r["record_id"], dot_val))
 
-    # Load all stored embeddings
-    all_embeddings = db.get_all_embeddings(EMBEDDING_MODEL)
-    if not all_embeddings:
-        return []
-
-    # Compute cosine similarities
-    scored: list[tuple[str, float]] = []
-    for record_id, stored_vec in all_embeddings:
-        similarity = float(np.dot(query_embedding, stored_vec))
-        scored.append((record_id, similarity))
-
-    # Sort by similarity descending
     scored.sort(key=lambda x: x[1], reverse=True)
+    return [(item[0], idx + 1, item[1]) for idx, item in enumerate(scored[:40])]
 
-    # Get top-k record IDs
-    top_ids = [rid for rid, _ in scored[:limit]]
-    records = db.get_records_by_ids(top_ids)
+def get_out_of_limit_telemetry_in_window(
+    time_anchor: Optional[datetime],
+    conn: sqlite3.Connection
+) -> List[str]:
+    if not time_anchor:
+        return []
 
-    # Return in similarity order
-    result = []
-    for rid, score in scored[:limit]:
-        if rid in records:
-            rec = records[rid].copy()
-            rec["_vector_score"] = score
-            result.append(rec)
-    return result
+    start_ts = (time_anchor - timedelta(minutes=settings.TIME_WINDOW_BEFORE_MIN)).isoformat()
+    end_ts = (time_anchor + timedelta(minutes=settings.TIME_WINDOW_AFTER_MIN)).isoformat()
 
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT record_id FROM telemetry
+        WHERE ts_utc >= ? AND ts_utc <= ? AND status IN ('warning', 'critical')
+        ORDER BY ts_utc ASC;
+    """, (start_ts, end_ts))
+    
+    return [r["record_id"] for r in cursor.fetchall()]
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Reciprocal Rank Fusion
-# ═══════════════════════════════════════════════════════════════════════════
+def hybrid_retrieval(query: str, anomaly_id: Optional[str] = None) -> Tuple[Dict[str, Dict[str, Any]], float]:
+    conn = get_connection()
+    time_anchor = extract_time_anchor(query)
+    
+    if not time_anchor and anomaly_id:
+        cursor = conn.cursor()
+        cursor.execute("SELECT ts_utc FROM records WHERE record_id = ?", (anomaly_id,))
+        row = cursor.fetchone()
+        if row:
+            time_anchor = datetime.fromisoformat(row["ts_utc"].replace("Z", "+00:00"))
 
-def reciprocal_rank_fusion(
-    *result_lists: list[dict[str, Any]],
-    k: int = RRF_K,
-) -> list[dict[str, Any]]:
-    """
-    Combine results from multiple retrieval methods using RRF.
+    subsystem = None
+    for sub in ["comms", "power", "thermal", "aocs", "payload", "propulsion"]:
+        if sub in query.lower():
+            subsystem = sub
+            break
 
-    RRF score for document d:
-        score(d) = Σ  1 / (k + rank_i(d))
+    # 1. SQL Retrieval
+    sql_results = perform_sql_retrieval(time_anchor, subsystem, conn)
+    
+    # 2. FTS Keyword Retrieval
+    fts_results = perform_fts_retrieval(query, conn)
+    
+    # 3. Vector Retrieval
+    query_vec = get_text_embedding(query)
+    vec_results = perform_vector_retrieval(query_vec, conn)
+    
+    # 4. Reciprocal Rank Fusion (RRF)
+    rrf_scores: Dict[str, float] = {}
+    k = settings.RRF_K
 
-    where rank_i(d) is the rank of d in result list i (1-indexed).
-    """
-    scores: dict[str, float] = {}
-    record_map: dict[str, dict[str, Any]] = {}
+    for rec_id, rank in sql_results:
+        rrf_scores[rec_id] = rrf_scores.get(rec_id, 0.0) + (1.2 / (k + rank))
 
-    for result_list in result_lists:
-        for rank, record in enumerate(result_list, start=1):
-            rid = record["id"]
-            scores[rid] = scores.get(rid, 0.0) + 1.0 / (k + rank)
-            if rid not in record_map:
-                record_map[rid] = record
+    for rec_id, rank in fts_results:
+        rrf_scores[rec_id] = rrf_scores.get(rec_id, 0.0) + (1.0 / (k + rank))
 
-    # Sort by RRF score descending
-    sorted_ids = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)
+    for rec_id, rank, sim in vec_results:
+        rrf_scores[rec_id] = rrf_scores.get(rec_id, 0.0) + (1.0 / (k + rank))
 
-    result = []
-    for rid in sorted_ids:
-        rec = record_map[rid].copy()
-        rec["_rrf_score"] = scores[rid]
-        result.append(rec)
-    return result
+    # 5. Out of limit preservation and subsystem procedures/incidents preservation
+    preserved_ids = list(get_out_of_limit_telemetry_in_window(time_anchor, conn))
 
+    # Add subsystem procedures and incidents
+    if subsystem:
+        cursor = conn.cursor()
+        cursor.execute("SELECT record_id FROM records WHERE subsystem LIKE ? AND rtype IN ('procedure', 'incident') LIMIT 4;", (f"%{subsystem}%",))
+        for r in cursor.fetchall():
+            if r["record_id"] not in preserved_ids:
+                preserved_ids.append(r["record_id"])
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Retrieval Strength
-# ═══════════════════════════════════════════════════════════════════════════
+    # 6. Rank records by RRF score
+    sorted_candidates = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    top_ids: List[str] = []
+    for p_id in preserved_ids:
+        if p_id not in top_ids:
+            top_ids.append(p_id)
 
-def compute_retrieval_strength(
-    records: list[dict[str, Any]],
-    query: str,
-    subsystems: list[str],
-) -> float:
-    """
-    Compute an evidence strength score in [0.0, 1.0].
+    for rec_id, _ in sorted_candidates:
+        if rec_id not in top_ids:
+            top_ids.append(rec_id)
+        if len(top_ids) >= settings.TOP_K_RECORDS + 5:
+            break
 
-    Factors:
-      - Number of retrieved records
-      - Diversity of record types
-      - Subsystem coverage
-      - Presence of procedures
-      - Presence of incidents
-    """
-    if not records:
-        return 0.0
+    cursor = conn.cursor()
+    retrieved_dict: Dict[str, Dict[str, Any]] = {}
+    
+    for r_id in top_ids:
+        cursor.execute("SELECT * FROM records WHERE record_id = ?", (r_id,))
+        rec_row = cursor.fetchone()
+        if rec_row:
+            retrieved_dict[r_id] = dict(rec_row)
 
-    n = len(records)
-    types_found = set(r.get("record_type", "") for r in records)
-    subs_found = set(r.get("subsystem", "") for r in records)
+    best_score = sorted_candidates[0][1] if sorted_candidates else 0.0
+    time_window_useful_count = len(sql_results)
+    retrieval_strength = float(best_score * 10.0 + min(time_window_useful_count, 5) * 0.1)
 
-    # Base score from record count (saturates at 10)
-    count_score = min(n / 10.0, 1.0)
-
-    # Type diversity bonus
-    type_score = len(types_found) / 4.0  # 4 main types
-    type_score = min(type_score, 1.0)
-
-    # Subsystem coverage
-    if subsystems:
-        sub_coverage = len(subs_found.intersection(set(subsystems))) / len(subsystems)
-    else:
-        sub_coverage = min(len(subs_found) / 3.0, 1.0)
-
-    # Procedure bonus
-    has_procedure = any(r.get("record_type") == "procedure" for r in records)
-    proc_bonus = 0.15 if has_procedure else 0.0
-
-    # Incident bonus
-    has_incident = any(r.get("record_type") == "incident" for r in records)
-    incident_bonus = 0.10 if has_incident else 0.0
-
-    # Weighted combination
-    strength = (
-        0.35 * count_score
-        + 0.25 * type_score
-        + 0.15 * sub_coverage
-        + proc_bonus
-        + incident_bonus
-    )
-
-    return round(min(strength, 1.0), 3)
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Main Retrieval Pipeline
-# ═══════════════════════════════════════════════════════════════════════════
-
-def hybrid_retrieve(
-    query: str,
-    subsystems: list[str],
-    time_window: Optional[dict[str, str]] = None,
-    top_k: int = RETRIEVAL_TOP_K,
-) -> tuple[list[dict[str, Any]], float]:
-    """
-    Execute the full hybrid retrieval pipeline:
-      SQL → FTS → Vector → RRF → Strength
-
-    Returns:
-        (records, retrieval_strength)
-    """
-    time_start = time_window.get("start") if time_window else None
-    time_end = time_window.get("end") if time_window else None
-
-    # 1. SQL retrieval
-    sql_results = retrieve_sql(
-        subsystems=subsystems,
-        time_start=time_start,
-        time_end=time_end,
-        limit=top_k,
-    )
-    logger.info("SQL retrieval: %d records", len(sql_results))
-
-    # 2. FTS retrieval
-    fts_results = retrieve_fts(query, limit=top_k)
-    logger.info("FTS retrieval: %d records", len(fts_results))
-
-    # 3. Vector retrieval
-    vector_results = retrieve_vector(query, limit=top_k)
-    logger.info("Vector retrieval: %d records", len(vector_results))
-
-    # 4. RRF fusion
-    fused = reciprocal_rank_fusion(sql_results, fts_results, vector_results)
-    logger.info("RRF fusion: %d unique records", len(fused))
-
-    # Limit to top-k
-    top_records = fused[:top_k]
-
-    # 5. Compute retrieval strength
-    strength = compute_retrieval_strength(top_records, query, subsystems)
-    logger.info("Retrieval strength: %.3f", strength)
-
-    return top_records, strength
-
-
-def should_abstain(strength: float) -> bool:
-    """Check if retrieval strength is too weak to proceed."""
-    return strength < RETRIEVAL_MIN_STRENGTH
+    conn.close()
+    return retrieved_dict, round(retrieval_strength, 4)
