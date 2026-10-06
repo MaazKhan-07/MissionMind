@@ -10,6 +10,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { ProfileModal } from './components/profile/ProfileModal';
 
 // Pages
+import { AuthPage } from './pages/AuthPage';
 import { LandingPage } from './pages/LandingPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { CopilotPage } from './pages/CopilotPage';
@@ -259,6 +260,21 @@ export const App: React.FC = () => {
         );
     }
   };
+
+  // Fullscreen Authentication Gate View
+  if (!user || currentPath === '/auth') {
+    return (
+      <div className="min-h-screen bg-[#0B0C10] text-[#C5C6C7] flex flex-col font-sans transition-colors duration-200 relative select-none">
+        <CustomCursor />
+        <AuthPage
+          onSuccess={() => {
+            setShowIntro(true);
+            setCurrentPath('/landing');
+          }}
+        />
+      </div>
+    );
+  }
 
   const isLandingView = currentPath === '/landing';
 

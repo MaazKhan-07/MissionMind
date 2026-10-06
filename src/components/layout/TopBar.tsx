@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAudio } from '../../contexts/AudioContext';
 import {
   Search,
   Bell,
@@ -11,9 +11,8 @@ import {
   ShieldCheck,
   AlertCircle,
   X,
-  Sun,
-  Moon,
-  Laptop,
+  Volume2,
+  VolumeX,
   User
 } from 'lucide-react';
 import { StatusIndicator } from '../common/StatusIndicator';
@@ -33,11 +32,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   isLiveMode,
   onNavigate
 }) => {
-  const { theme, effectiveTheme, setTheme } = useTheme();
   const { user } = useAuth();
+  const { audioEnabled, toggleAudio, playClickSound } = useAudio();
   const [utcTime, setUtcTime] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState(false);
-  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
 
   useEffect(() => {
     const updateClock = () => {
@@ -125,6 +123,30 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right: Controls */}
       <div className="flex items-center gap-3">
+        {/* Global Immersive Audio Control */}
+        <button
+          onClick={() => {
+            toggleAudio();
+          }}
+          className={`p-2 rounded-lg transition-all border font-mono text-xs flex items-center gap-1.5 ${
+            audioEnabled
+              ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 shadow-cyan-glow'
+              : 'bg-space-800 border-slate-700 text-slate-400 hover:text-white'
+          }`}
+          title={audioEnabled ? 'Mute Immersive Audio' : 'Enable Immersive Audio'}
+        >
+          {audioEnabled ? (
+            <>
+              <Volume2 className="w-4 h-4 text-cyan-400 animate-pulse" />
+              <span className="hidden lg:inline text-[10px] font-bold">AUDIO ON</span>
+            </>
+          ) : (
+            <>
+              <VolumeX className="w-4 h-4 text-slate-400" />
+              <span className="hidden lg:inline text-[10px]">MUTED</span>
+            </>
+          )}
+        </button>
 
         {/* Notifications Dropdown Button */}
         <div className="relative">

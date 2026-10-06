@@ -4,6 +4,7 @@ import { App } from './App'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { AudioProvider } from './contexts/AudioContext'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import './index.css'
 
@@ -28,9 +29,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ErrorBoundary fallbackTitle="Mission Operations Console">
       <ThemeProvider>
         <AuthProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
+          <AudioProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </AudioProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

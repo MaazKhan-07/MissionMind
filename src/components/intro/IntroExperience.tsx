@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Sparkles, Volume2, Shield } from 'lucide-react';
+import { useAudio } from '../../contexts/AudioContext';
 
 interface IntroExperienceProps {
   onComplete: () => void;
@@ -7,6 +8,7 @@ interface IntroExperienceProps {
 
 export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { startAmbient, playClickSound } = useAudio();
   const [loading, setLoading] = useState<boolean>(true);
   const [autoplayBlocked, setAutoplayBlocked] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -25,7 +27,6 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
         setLoading(false);
         setAutoplayBlocked(false);
       } catch (err) {
-        // Browser requires user gesture for unmuted sound; play muted automatically so video plays smoothly
         try {
           video.muted = true;
           await video.play();
@@ -41,9 +42,9 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
     startPlayback();
 
     const handleEnded = () => {
-      // Trigger cinematic fade, slight blur, slight scale transition
       setIsTransitioning(true);
       setTimeout(() => {
+        startAmbient();
         onComplete();
       }, 950);
     };
@@ -54,9 +55,10 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
       video.removeEventListener('ended', handleEnded);
       video.pause();
     };
-  }, [onComplete]);
+  }, [onComplete, startAmbient]);
 
   const handleManualEnter = async () => {
+    playClickSound();
     const video = videoRef.current;
     if (!video) return;
 
@@ -66,7 +68,6 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
       await video.play();
       setAutoplayBlocked(false);
     } catch (e) {
-      // If still blocked, fallback to muted play
       video.muted = true;
       await video.play();
       setAutoplayBlocked(false);
@@ -154,8 +155,12 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onComplete }) 
       {!loading && !autoplayBlocked && (
         <button
           onClick={() => {
+            playClickSound();
             setIsTransitioning(true);
-            setTimeout(onComplete, 500);
+            setTimeout(() => {
+              startAmbient();
+              onComplete();
+            }, 500);
           }}
           className="absolute bottom-8 right-8 z-30 px-7 py-3.5 rounded-xl bg-black/80 hover:bg-black border-2 border-[#66FCF1] text-white font-mono text-sm font-bold tracking-wider backdrop-blur-md shadow-[0_0_25px_rgba(102,252,241,0.5)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3 cursor-pointer"
         >
