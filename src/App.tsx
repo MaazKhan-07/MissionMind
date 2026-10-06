@@ -5,6 +5,7 @@ import { FloatingNavbar } from './components/navigation/FloatingNavbar';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { SatelliteDetailDrawer } from './components/mission/SatelliteDetailDrawer';
 import { IntroExperience } from './components/intro/IntroExperience';
+import { GlobalVideoBackground } from './components/layout/GlobalVideoBackground';
 import { AuthModal } from './components/auth/AuthModal';
 import { ProfileModal } from './components/profile/ProfileModal';
 
@@ -260,7 +261,10 @@ export const App: React.FC = () => {
   const isLandingView = currentPath === '/landing';
 
   return (
-    <div className="min-h-screen bg-void text-slate-100 flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-transparent text-slate-100 flex flex-col font-sans transition-colors duration-200 relative">
+      {/* 0. Persistent Global Background Video (Runs continuously behind the entire app across all routes) */}
+      <GlobalVideoBackground />
+
       {/* 1. Cinematic Intro Video Experience */}
       {showIntro && (
         <IntroExperience
@@ -282,7 +286,7 @@ export const App: React.FC = () => {
 
       {/* 3. Workstation Layout Shell (when in Mission Control / Apps) */}
       {!isLandingView ? (
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen relative z-10">
           {/* Minimal Collapsible Sidebar */}
           <Sidebar
             currentPath={currentPath}
@@ -319,7 +323,7 @@ export const App: React.FC = () => {
         </div>
       ) : (
         /* Fullscreen Landing View */
-        <main className="flex-1">
+        <main className="flex-1 relative z-10">
           {renderCurrentPage()}
         </main>
       )}
